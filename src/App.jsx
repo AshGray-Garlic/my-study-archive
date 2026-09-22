@@ -599,51 +599,196 @@ export default function App() {
         </header>
 
         <div className="p-6 md:p-8 space-y-8 flex-1">
-          {/* TAB 1: DASHBOARD */}
+          {/* TAB 1: DASHBOARD (통합 검색 지원) */}
           {activeTab === 'dashboard' && (
             <div className="space-y-8 animate-fadeIn">
-              <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-800/40">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  Personal Learning Archive
-                </span>
-                <h2 className="text-2xl md:text-3xl font-bold text-white mt-3 mb-2">
-                  환영합니다, 엔지니어님! 🚀
-                </h2>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  알고리즘 플랫폼 세팅을 커스텀하고, 모든 학습 기록을 GitHub 저장소(`public/data/db.json`)와 완벽히 동기화합니다.
-                </p>
-              </div>
+              {/* 검색어가 없을 때: 기본 대시보드 통계 화면 */}
+              {!searchQuery.trim() ? (
+                <>
+                  <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-800/40">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      Personal Learning Archive
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mt-3 mb-2">
+                      환영합니다, 엔지니어님! 🚀
+                    </h2>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      상단 검색창에서 알고리즘 문제, 자격증 핵심 요약, CS 이론, 어학 표현을 통합 검색할 수 있습니다.
+                    </p>
+                  </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
-                  <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">해결한 알고리즘</span>
-                    <Code2 className="w-4 h-4 text-emerald-400" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+                      <div className="flex items-center justify-between text-slate-400 mb-2">
+                        <span className="text-xs font-medium">해결한 알고리즘</span>
+                        <Code2 className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <div className="text-2xl font-bold text-white font-mono">{algoList.length} <span className="text-xs text-slate-400 font-sans font-normal">문제</span></div>
+                    </div>
+                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+                      <div className="flex items-center justify-between text-slate-400 mb-2">
+                        <span className="text-xs font-medium">자격증 노트</span>
+                        <Award className="w-4 h-4 text-amber-400" />
+                      </div>
+                      <div className="text-2xl font-bold text-white font-mono">{certNotes.length} <span className="text-xs text-slate-400 font-sans font-normal">개</span></div>
+                    </div>
+                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+                      <div className="flex items-center justify-between text-slate-400 mb-2">
+                        <span className="text-xs font-medium">컴퓨터 구조 & CS</span>
+                        <Cpu className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div className="text-2xl font-bold text-white font-mono">{csList.length} <span className="text-xs text-slate-400 font-sans font-normal">주제</span></div>
+                    </div>
+                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+                      <div className="flex items-center justify-between text-slate-400 mb-2">
+                        <span className="text-xs font-medium">어학 템플릿</span>
+                        <Languages className="w-4 h-4 text-rose-400" />
+                      </div>
+                      <div className="text-2xl font-bold text-white font-mono">{langList.length} <span className="text-xs text-slate-400 font-sans font-normal">세트</span></div>
+                    </div>
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{algoList.length} <span className="text-xs text-slate-400 font-sans font-normal">문제</span></div>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
-                  <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">자격증 노트</span>
-                    <Award className="w-4 h-4 text-amber-400" />
+                </>
+              ) : (
+                /* 검색어가 있을 때: 통합 검색 결과 뷰 */
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Search className="w-5 h-5 text-indigo-400" />
+                      통합 검색 결과: <span className="text-indigo-400 font-mono">"{searchQuery}"</span>
+                    </h3>
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700/60"
+                    >
+                      검색어 초기화
+                    </button>
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{certNotes.length} <span className="text-xs text-slate-400 font-sans font-normal">개</span></div>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
-                  <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">컴퓨터 구조 & CS</span>
-                    <Cpu className="w-4 h-4 text-blue-400" />
+
+                  {/* 알고리즘 검색 결과 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+                        <Code2 className="w-4 h-4" />
+                        알고리즘 ({filteredAlgorithms.length})
+                      </h4>
+                      {filteredAlgorithms.length > 0 && (
+                        <button
+                          onClick={() => setActiveTab('algo')}
+                          className="text-xs text-slate-400 hover:text-emerald-400 flex items-center gap-1"
+                        >
+                          알고리즘 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    {filteredAlgorithms.length === 0 ? (
+                      <p className="text-xs text-slate-500 py-3 px-4 bg-slate-900/40 rounded-xl border border-slate-800">
+                        일치하는 알고리즘 문제가 없습니다.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {filteredAlgorithms.slice(0, 4).map((algo) => (
+                          <div
+                            key={algo.id}
+                            onClick={() => setActiveTab('algo')}
+                            className="p-4 bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-xl cursor-pointer transition space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                {algo.platform} #{algo.problemNumber}
+                              </span>
+                              <span className="text-[11px] text-slate-400">{algo.difficulty}</span>
+                            </div>
+                            <h5 className="text-sm font-bold text-white truncate">{algo.title}</h5>
+                            <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed whitespace-pre-wrap">
+                              {algo.summary}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{csList.length} <span className="text-xs text-slate-400 font-sans font-normal">주제</span></div>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
-                  <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">어학 템플릿</span>
-                    <Languages className="w-4 h-4 text-rose-400" />
+
+                  {/* 자격증 검색 결과 */}
+                  <div className="space-y-3 pt-4 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-amber-400 flex items-center gap-1.5">
+                        <Award className="w-4 h-4" />
+                        자격증 노트 ({filteredCertNotes.length})
+                      </h4>
+                      {filteredCertNotes.length > 0 && (
+                        <button
+                          onClick={() => setActiveTab('cert')}
+                          className="text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1"
+                        >
+                          자격증 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    {filteredCertNotes.length === 0 ? (
+                      <p className="text-xs text-slate-500 py-3 px-4 bg-slate-900/40 rounded-xl border border-slate-800">
+                        일치하는 자격증 노트가 없습니다.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {filteredCertNotes.slice(0, 4).map((note) => (
+                          <div
+                            key={note.id}
+                            onClick={() => setActiveTab('cert')}
+                            className="p-4 bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-xl cursor-pointer transition space-y-2"
+                          >
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              {note.certName}
+                            </span>
+                            <h5 className="text-sm font-bold text-white truncate">{note.title}</h5>
+                            <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed whitespace-pre-wrap">
+                              {note.summary}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{langList.length} <span className="text-xs text-slate-400 font-sans font-normal">세트</span></div>
+
+                  {/* CS 토픽 검색 결과 */}
+                  <div className="space-y-3 pt-4 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-blue-400 flex items-center gap-1.5">
+                        <Cpu className="w-4 h-4" />
+                        컴퓨터 구조 & CS ({csList.filter((c) => c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.concept.toLowerCase().includes(searchQuery.toLowerCase())).length})
+                      </h4>
+                      <button
+                        onClick={() => setActiveTab('cs')}
+                        className="text-xs text-slate-400 hover:text-blue-400 flex items-center gap-1"
+                      >
+                        CS 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {csList
+                        .filter((c) => c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.concept.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .slice(0, 4)
+                        .map((cs) => (
+                          <div
+                            key={cs.id}
+                            onClick={() => setActiveTab('cs')}
+                            className="p-4 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-xl cursor-pointer transition space-y-2"
+                          >
+                            <span className="text-[11px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                              {cs.domain}
+                            </span>
+                            <h5 className="text-sm font-bold text-white truncate">{cs.title}</h5>
+                            <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed whitespace-pre-wrap">
+                              {cs.concept}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
