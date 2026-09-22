@@ -9,33 +9,35 @@ import {
   Plus,
   Calendar,
   Clock,
-  CheckCircle2,
   Sparkles,
   Volume2,
   Copy,
   Check,
-  RotateCcw,
-  BookOpen,
   Filter,
   Tag,
   Trash2,
   Zap,
   ArrowRight,
-  HelpCircle,
-  Layers,
-  FileText,
   Key,
-  RefreshCw
+  RefreshCw,
+  BookOpen,
+  HelpCircle,
+  RotateCcw,
+  Settings,
+  X
 } from 'lucide-react';
 
 const REPO_OWNER = 'AshGray-Garlic';
 const REPO_NAME = 'my-study-archive';
 const FILE_PATH = 'public/data/db.json';
 
+const DEFAULT_PLATFORMS = ['Baekjoon', 'SWEA', 'Programmers', 'LeetCode', 'CodeTree'];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('ALL');
+  const [selectedCertTab, setSelectedCertTab] = useState('ALL');
 
   // GitHub Token & Sync States
   const [githubToken, setGithubToken] = useState(() => localStorage.getItem('gh_token') || '');
@@ -47,8 +49,14 @@ export default function App() {
   // App Data States
   const [algoList, setAlgoList] = useState([]);
   const [certList, setCertList] = useState([]);
+  const [certNotes, setCertNotes] = useState([]);
   const [csList, setCsList] = useState([]);
   const [langList, setLangList] = useState([]);
+  
+  // Custom Platform Settings State
+  const [platforms, setPlatforms] = useState(DEFAULT_PLATFORMS);
+  const [newPlatformInput, setNewPlatformInput] = useState('');
+  const [customPlatformMode, setCustomPlatformMode] = useState(false);
 
   // Load Data from GitHub API
   const loadDataFromGithub = async (token = githubToken) => {
@@ -65,17 +73,22 @@ export default function App() {
         const data = JSON.parse(decoded);
         setAlgoList(data.algorithms || []);
         setCertList(data.certifications || []);
+        setCertNotes(data.certNotes || []);
         setCsList(data.csTopics || []);
         setLangList(data.languages || []);
+        if (data.platforms && Array.isArray(data.platforms) && data.platforms.length > 0) {
+          setPlatforms(data.platforms);
+        }
       } else {
-        // 원격에 파일이 없으면 로컬 백업 확인
         const local = localStorage.getItem('study_db_cache');
         if (local) {
           const parsed = JSON.parse(local);
           setAlgoList(parsed.algorithms || []);
           setCertList(parsed.certifications || []);
+          setCertNotes(parsed.certNotes || []);
           setCsList(parsed.csTopics || []);
           setLangList(parsed.languages || []);
+          if (parsed.platforms) setPlatforms(parsed.platforms);
         }
       }
     } catch (err) {
@@ -92,7 +105,7 @@ export default function App() {
   // Save/Commit Data to GitHub
   const commitToGithub = async (newAllData) => {
     if (!githubToken) {
-      alert('GitHub 토큰이 등록되지 않아 로컬 브라우저에만 저장됩니다. 사이드바의 설정에서 토큰을 입력해주세요.');
+      alert('GitHub 토큰이 등록되지 않아 로컬 브라우저에만 저장됩니다.');
       localStorage.setItem('study_db_cache', JSON.stringify(newAllData));
       return false;
     }
@@ -108,7 +121,7 @@ export default function App() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: 'chore: update study archive data',
+          message: 'chore: update study archive data & settings',
           content: contentEncoded,
           sha: fileSha || undefined
         })
@@ -132,41 +145,89 @@ export default function App() {
     }
   };
 
+  // Platform Management Handlers
+  const handleAddPlatform = async (e) => {
+    e.preventDefault();
+    const trimmed = newPlatformInput.trim();
+    if (!trimmed) return;
+    if (platforms.includes(trimmed)) {
+      alert('이미 존재하는 플랫폼 이름입니다.');
+      return;
+    }
+    const updated = [...platforms, trimmed];
+    setPlatforms(updated);
+    setNewPlatformInput('');
+
+    const fullData = {
+      algorithms: algoList,
+      certifications: certList,
+      certNotes: certNotes,
+      csTopics: csList,
+      languages: langList,
+      platforms: updated
+    };
+    await commitToGithub(fullData);
+  };
+
+  const handleDeletePlatform = async (platformName) => {
+    if (platforms.length <= 1) {
+      alert('최소 1개 이상의 플랫폼은 유지되어야 합니다.');
+      return;
+    }
+    if (!window.confirm(`'${platformName}' 플랫폼을 삭제하시겠습니까?`)) return;
+    const updated = platforms.filter((p) => p !== platformName);
+    setPlatforms(updated);
+
+    const fullData = {
+      algorithms: algoList,
+      certifications: certList,
+      certNotes: certNotes,
+      csTopics: csList,
+      languages: langList,
+      platforms: updated
+    };
+    await commitToGithub(fullData);
+  };
+
   // Delete Item Handler
   const handleDeleteItem = async (category, id) => {
     if (!window.confirm('해당 항목을 영구 삭제하시겠습니까? (GitHub 저장소에서도 함께 삭제됩니다)')) return;
 
     let updatedAlgo = algoList;
     let updatedCert = certList;
+    let updatedCertNotes = certNotes;
     let updatedCs = csList;
     let updatedLang = langList;
 
     if (category === 'algo') updatedAlgo = algoList.filter((item) => item.id !== id);
     if (category === 'cert') updatedCert = certList.filter((item) => item.id !== id);
+    if (category === 'certNote') updatedCertNotes = certNotes.filter((item) => item.id !== id);
     if (category === 'cs') updatedCs = csList.filter((item) => item.id !== id);
     if (category === 'lang') updatedLang = langList.filter((item) => item.id !== id);
 
     const fullData = {
       algorithms: updatedAlgo,
       certifications: updatedCert,
+      certNotes: updatedCertNotes,
       csTopics: updatedCs,
-      languages: updatedLang
+      languages: updatedLang,
+      platforms: platforms
     };
 
     setAlgoList(updatedAlgo);
     setCertList(updatedCert);
+    setCertNotes(updatedCertNotes);
     setCsList(updatedCs);
     setLangList(updatedLang);
 
     await commitToGithub(fullData);
   };
 
-  // Flashcard Modal State
+  // Modals & States
   const [flashcardOpen, setFlashcardOpen] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // New Note Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newNoteCategory, setNewNoteCategory] = useState('algo');
   const [newNoteData, setNewNoteData] = useState({
@@ -177,7 +238,9 @@ export default function App() {
     code: '',
     summary: '',
     keyPoint: '',
-    subCategory: 'Data Structure'
+    subCategory: '정보처리기사',
+    certQuestion: '',
+    certAnswer: ''
   });
 
   const [copiedId, setCopiedId] = useState(null);
@@ -198,15 +261,12 @@ export default function App() {
     setTimeout(() => setCopiedId(null), 1800);
   };
 
-  const allFlashcards = useMemo(() => {
-    const cards = [];
-    certList.forEach((c) => {
-      if (c.flashcards) {
-        c.flashcards.forEach((fc) => cards.push({ ...fc, certName: c.title }));
-      }
-    });
-    return cards;
-  }, [certList]);
+  const certTabOptions = useMemo(() => {
+    const set = new Set(['ALL']);
+    certList.forEach((c) => set.add(c.title));
+    certNotes.forEach((n) => set.add(n.certName));
+    return Array.from(set);
+  }, [certList, certNotes]);
 
   const allAlgoTags = useMemo(() => {
     const set = new Set(['ALL']);
@@ -214,6 +274,17 @@ export default function App() {
     return Array.from(set);
   }, [algoList]);
 
+  const allFlashcards = useMemo(() => {
+    const list = [];
+    certNotes.forEach((n) => {
+      if (n.question && n.answer) {
+        list.push({ q: n.question, a: n.answer, certName: n.certName });
+      }
+    });
+    return list;
+  }, [certNotes]);
+
+  // Create Note Handler
   const handleCreateNote = async (e) => {
     e.preventDefault();
     if (!newNoteData.title.trim()) return;
@@ -221,41 +292,62 @@ export default function App() {
     const tagArray = newNoteData.tags.split(',').map((t) => t.trim()).filter(Boolean);
 
     let updatedAlgo = algoList;
+    let updatedCertNotes = certNotes;
     let updatedCs = csList;
     let updatedLang = langList;
+    let updatedPlatforms = platforms;
 
     if (newNoteCategory === 'algo') {
+      const chosenPlatform = newNoteData.platform.trim() || 'Custom';
+      if (!platforms.includes(chosenPlatform)) {
+        updatedPlatforms = [...platforms, chosenPlatform];
+        setPlatforms(updatedPlatforms);
+      }
+
       const newAlgo = {
         id: `algo-${Date.now()}`,
         title: newNoteData.title,
-        platform: newNoteData.platform,
+        platform: chosenPlatform,
         problemNumber: 'NEW',
         difficulty: newNoteData.difficulty,
         tags: tagArray.length > 0 ? tagArray : ['구현'],
         timeComplexity: 'O(N)',
         spaceComplexity: 'O(N)',
         status: 'Solved',
-        summary: newNoteData.summary || '학습한 문제 요약 내용입니다.',
-        keyPoint: newNoteData.keyPoint || '핵심 아이디어 및 고려할 예외 조건.',
+        summary: newNoteData.summary || '문제 요약 내용',
+        keyPoint: newNoteData.keyPoint || '핵심 알고리즘 접근법',
         codeLanguage: 'java',
         code: newNoteData.code || '// 풀이 코드를 입력하세요\npublic class Main {\n}',
-        retrospective: '새로 추가된 학습 기록입니다.'
+        retrospective: '새로 추가된 학습 기록'
       };
       updatedAlgo = [newAlgo, ...algoList];
       setAlgoList(updatedAlgo);
       setActiveTab('algo');
+    } else if (newNoteCategory === 'cert') {
+      const newCertNote = {
+        id: `cert-note-${Date.now()}`,
+        certName: newNoteData.subCategory || '정보처리기사',
+        title: newNoteData.title,
+        tags: tagArray.length > 0 ? tagArray : ['핵심암기'],
+        summary: newNoteData.summary || '공부한 핵심 이론 및 요약 내용',
+        keyPoint: newNoteData.keyPoint || '',
+        question: newNoteData.certQuestion || '',
+        answer: newNoteData.certAnswer || ''
+      };
+      updatedCertNotes = [newCertNote, ...certNotes];
+      setCertNotes(updatedCertNotes);
+      setActiveTab('cert');
     } else if (newNoteCategory === 'cs') {
       const newCs = {
         id: `cs-${Date.now()}`,
-        domain: newNoteData.subCategory,
+        domain: newNoteData.subCategory || 'Network',
         title: newNoteData.title,
         importance: 'High (★ 4.0)',
-        concept: newNoteData.summary || '개념 정의 및 메커니즘을 기술합니다.',
-        comparison: null,
+        concept: newNoteData.summary || '개념 정의 및 상세 메커니즘',
         interviewQA: [
           {
             q: `${newNoteData.title}의 핵심 원리는 무엇인가요?`,
-            a: newNoteData.keyPoint || '상세 답변 내용을 정리합니다.'
+            a: newNoteData.keyPoint || '상세 답변 내용'
           }
         ]
       };
@@ -267,16 +359,13 @@ export default function App() {
         id: `lang-${Date.now()}`,
         category: 'Personal Log',
         title: newNoteData.title,
-        situation: newNoteData.summary || '학습 표현 및 상황',
+        situation: newNoteData.summary || '상황 및 뉘앙스',
         dialogue: [
           {
             speaker: 'User',
-            en: newNoteData.keyPoint || 'I would like to explain this concept smoothly.',
-            ko: '이 개념을 유창하게 설명하고 싶습니다.'
+            en: newNoteData.keyPoint || 'I would like to express this clearly.',
+            ko: '이 표현을 명확히 전달하고 싶습니다.'
           }
-        ],
-        templates: [
-          { en: 'In a nutshell, the primary reason is...', ko: '요약하자면, 주된 이유는 ~입니다.' }
         ]
       };
       updatedLang = [newLang, ...langList];
@@ -287,22 +376,27 @@ export default function App() {
     const fullData = {
       algorithms: updatedAlgo,
       certifications: certList,
+      certNotes: updatedCertNotes,
       csTopics: updatedCs,
-      languages: updatedLang
+      languages: updatedLang,
+      platforms: updatedPlatforms
     };
 
     await commitToGithub(fullData);
 
     setNewNoteData({
       title: '',
-      platform: 'Baekjoon',
+      platform: updatedPlatforms[0] || 'Baekjoon',
       difficulty: 'Silver',
       tags: '',
       code: '',
       summary: '',
       keyPoint: '',
-      subCategory: 'Data Structure'
+      subCategory: '정보처리기사',
+      certQuestion: '',
+      certAnswer: ''
     });
+    setCustomPlatformMode(false);
     setIsModalOpen(false);
   };
 
@@ -313,26 +407,29 @@ export default function App() {
     loadDataFromGithub(tokenInput.trim());
   };
 
+  const filteredCertNotes = useMemo(() => {
+    return certNotes.filter((note) => {
+      const matchesTab = selectedCertTab === 'ALL' || note.certName === selectedCertTab;
+      const matchesSearch =
+        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        note.certName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (note.summary && note.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (note.tags && note.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
+      return matchesTab && matchesSearch;
+    });
+  }, [certNotes, selectedCertTab, searchQuery]);
+
   const filteredAlgorithms = useMemo(() => {
     return algoList.filter((item) => {
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.platform.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.summary && item.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        item.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesTag = selectedTag === 'ALL' || item.tags.includes(selectedTag);
+        (item.tags && item.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
+      const matchesTag = selectedTag === 'ALL' || (item.tags && item.tags.includes(selectedTag));
       return matchesSearch && matchesTag;
     });
   }, [algoList, searchQuery, selectedTag]);
-
-  const filteredCs = useMemo(() => {
-    return csList.filter(
-      (item) =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.concept && item.concept.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }, [csList, searchQuery]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col md:flex-row">
@@ -352,7 +449,11 @@ export default function App() {
           </div>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setNewNoteCategory('algo');
+              if (platforms.length > 0) setNewNoteData((prev) => ({ ...prev, platform: platforms[0] }));
+              setIsModalOpen(true);
+            }}
             className="w-full mb-6 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-medium text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition-all"
           >
             <Plus className="w-4 h-4" />
@@ -363,7 +464,7 @@ export default function App() {
             <button
               onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -375,7 +476,7 @@ export default function App() {
             <button
               onClick={() => { setActiveTab('algo'); setSearchQuery(''); }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -390,7 +491,7 @@ export default function App() {
             <button
               onClick={() => { setActiveTab('cert'); setSearchQuery(''); }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -398,14 +499,14 @@ export default function App() {
                 <span>자격증 (Cert)</span>
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">
-                {certList.length}
+                {certNotes.length}
               </span>
             </button>
 
             <button
               onClick={() => { setActiveTab('cs'); setSearchQuery(''); }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -420,7 +521,7 @@ export default function App() {
             <button
               onClick={() => { setActiveTab('language'); setSearchQuery(''); }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'language' ? 'bg-slate-800 text-indigo-400 shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                activeTab === 'language' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -431,10 +532,24 @@ export default function App() {
                 {langList.length}
               </span>
             </button>
+
+            <button
+              onClick={() => { setActiveTab('settings'); setSearchQuery(''); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'settings' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Settings className="w-4 h-4 text-purple-400" />
+                <span>설정 (플랫폼 관리)</span>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">
+                {platforms.length}
+              </span>
+            </button>
           </nav>
         </div>
 
-        {/* Sync Settings Bottom Button */}
         <div className="mt-6 pt-4 border-t border-slate-800/80">
           <button
             onClick={() => setIsTokenModalOpen(true)}
@@ -449,14 +564,14 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen">
         <header className="sticky top-0 z-10 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-96">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="개념, 알고리즘, CS 용어, 태그 검색..."
+              placeholder="개념, 기출 요약, 알고리즘 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -473,17 +588,19 @@ export default function App() {
               <RefreshCw className={`w-3.5 h-3.5 text-indigo-400 ${isSyncing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">동기화</span>
             </button>
-            <button
-              onClick={() => {
-                setCurrentCardIndex(0);
-                setIsFlipped(false);
-                setFlashcardOpen(true);
-              }}
-              className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-medium rounded-xl flex items-center gap-1.5 transition"
-            >
-              <Zap className="w-3.5 h-3.5" />
-              <span>암기 플래시카드 모드</span>
-            </button>
+            {allFlashcards.length > 0 && (
+              <button
+                onClick={() => {
+                  setCurrentCardIndex(0);
+                  setIsFlipped(false);
+                  setFlashcardOpen(true);
+                }}
+                className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-medium rounded-xl flex items-center gap-1.5 transition"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>플래시카드 모드</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -492,40 +609,38 @@ export default function App() {
           {activeTab === 'dashboard' && (
             <div className="space-y-8 animate-fadeIn">
               <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-800/40">
-                <div className="max-w-2xl">
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    Personal Learning Archive
-                  </span>
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mt-3 mb-2">
-                    환영합니다, 엔지니어님! 🚀
-                  </h2>
-                  <p className="text-slate-400 text-sm leading-relaxed">
-                    작성하거나 삭제한 데이터는 GitHub API를 통해 실시간으로 원격 저장소(`public/data/db.json`)에 자동 반영됩니다.
-                  </p>
-                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  Personal Learning Archive
+                </span>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mt-3 mb-2">
+                  환영합니다, 엔지니어님! 🚀
+                </h2>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  알고리즘 플랫폼 세팅을 커스텀하고, 모든 학습 기록을 GitHub 저장소(`public/data/db.json`)와 완벽히 동기화합니다.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
                   <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">해결한 문제</span>
+                    <span className="text-xs font-medium">해결한 알고리즘</span>
                     <Code2 className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div className="text-2xl font-bold text-white font-mono">{algoList.length} <span className="text-xs text-slate-400 font-sans font-normal">문제</span></div>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
                   <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">자격증 로드맵</span>
+                    <span className="text-xs font-medium">자격증 노트</span>
                     <Award className="w-4 h-4 text-amber-400" />
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{certList.length} <span className="text-xs text-slate-400 font-sans font-normal">과목</span></div>
+                  <div className="text-2xl font-bold text-white font-mono">{certNotes.length} <span className="text-xs text-slate-400 font-sans font-normal">개</span></div>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
                   <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">CS 면접 토픽</span>
-                    <Cpu className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-medium">활성 플랫폼</span>
+                    <Settings className="w-4 h-4 text-purple-400" />
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{csList.length} <span className="text-xs text-slate-400 font-sans font-normal">주제</span></div>
+                  <div className="text-2xl font-bold text-white font-mono">{platforms.length} <span className="text-xs text-slate-400 font-sans font-normal">개</span></div>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
                   <div className="flex items-center justify-between text-slate-400 mb-2">
@@ -535,45 +650,6 @@ export default function App() {
                   <div className="text-2xl font-bold text-white font-mono">{langList.length} <span className="text-xs text-slate-400 font-sans font-normal">세트</span></div>
                 </div>
               </div>
-
-              {/* Category Nav Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div onClick={() => setActiveTab('algo')} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition-all hover:-translate-y-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400"><Code2 className="w-5 h-5" /></div>
-                    <span className="text-xs text-slate-400 flex items-center gap-1">이동하기 <ArrowRight className="w-3 h-3" /></span>
-                  </div>
-                  <h4 className="text-base font-semibold text-white mb-1">알고리즘 (Algorithm)</h4>
-                  <p className="text-xs text-slate-400">문제 풀이, 시간 복잡도, 코드 뷰어 및 항목 삭제 지원.</p>
-                </div>
-
-                <div onClick={() => setActiveTab('cert')} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 cursor-pointer transition-all hover:-translate-y-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400"><Award className="w-5 h-5" /></div>
-                    <span className="text-xs text-slate-400 flex items-center gap-1">이동하기 <ArrowRight className="w-3 h-3" /></span>
-                  </div>
-                  <h4 className="text-base font-semibold text-white mb-1">자격증 (Certification)</h4>
-                  <p className="text-xs text-slate-400">정보처리기사 및 SQLD 암기 노트 및 플래시카드 복습.</p>
-                </div>
-
-                <div onClick={() => setActiveTab('cs')} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 cursor-pointer transition-all hover:-translate-y-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400"><Cpu className="w-5 h-5" /></div>
-                    <span className="text-xs text-slate-400 flex items-center gap-1">이동하기 <ArrowRight className="w-3 h-3" /></span>
-                  </div>
-                  <h4 className="text-base font-semibold text-white mb-1">컴퓨터 사이언스 (CS)</h4>
-                  <p className="text-xs text-slate-400">OS, Network, DB 개념 비교 분석 및 기술 면접 꼬리질문.</p>
-                </div>
-
-                <div onClick={() => setActiveTab('language')} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 cursor-pointer transition-all hover:-translate-y-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400"><Languages className="w-5 h-5" /></div>
-                    <span className="text-xs text-slate-400 flex items-center gap-1">이동하기 <ArrowRight className="w-3 h-3" /></span>
-                  </div>
-                  <h4 className="text-base font-semibold text-white mb-1">어학 및 테크 영어 (Language)</h4>
-                  <p className="text-xs text-slate-400">OPIc AL 대비 롤플레이, PR 코멘트 템플릿 및 TTS 음성 재생.</p>
-                </div>
-              </div>
             </div>
           )}
 
@@ -581,19 +657,30 @@ export default function App() {
           {activeTab === 'algo' && (
             <div className="space-y-6 animate-fadeIn">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
-                    <Code2 className="w-6 h-6 text-emerald-400" />
-                    알고리즘 아카이브
-                  </h2>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
+                  <Code2 className="w-6 h-6 text-emerald-400" />
+                  알고리즘 아카이브
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium rounded-xl flex items-center gap-1.5 transition"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-purple-400" />
+                    <span>플랫폼 관리</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNewNoteCategory('algo');
+                      if (platforms.length > 0) setNewNoteData((prev) => ({ ...prev, platform: platforms[0] }));
+                      setIsModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>새 문제 풀이 등록</span>
+                  </button>
                 </div>
-                <button
-                  onClick={() => { setNewNoteCategory('algo'); setIsModalOpen(true); }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>새 문제 풀이 등록</span>
-                </button>
               </div>
 
               {/* Tag Filters */}
@@ -612,11 +699,11 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Problem List with Delete */}
+              {/* Problem List */}
               <div className="space-y-6">
                 {filteredAlgorithms.length === 0 ? (
                   <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800">
-                    <p className="text-slate-400 text-sm">등록된 알고리즘 풀이가 없습니다.</p>
+                    <p className="text-slate-400 text-sm">해당 조건의 알고리즘 풀이가 없습니다.</p>
                   </div>
                 ) : (
                   filteredAlgorithms.map((algo) => (
@@ -631,28 +718,17 @@ export default function App() {
                             {algo.difficulty}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-slate-400 font-mono hidden sm:inline">시간: {algo.timeComplexity}</span>
-                          <button
-                            onClick={() => handleDeleteItem('algo', algo.id)}
-                            title="항목 삭제"
-                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleDeleteItem('algo', algo.id)}
+                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
 
                       <div className="p-5 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                          <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800">
-                            <span className="font-semibold text-slate-300 block mb-1">📌 문제 요약</span>
-                            <p className="text-slate-400">{algo.summary}</p>
-                          </div>
-                          <div className="p-3.5 bg-indigo-950/20 rounded-xl border border-indigo-900/30">
-                            <span className="font-semibold text-indigo-300 block mb-1">💡 핵심 아이디어</span>
-                            <p className="text-slate-300">{algo.keyPoint}</p>
-                          </div>
+                        <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-300">
+                          {algo.summary}
                         </div>
 
                         {algo.code && (
@@ -672,15 +748,6 @@ export default function App() {
                             </pre>
                           </div>
                         )}
-
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                          <Tag className="w-3.5 h-3.5 text-slate-500" />
-                          {algo.tags?.map((t, idx) => (
-                            <span key={idx} className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/50">
-                              #{t}
-                            </span>
-                          ))}
-                        </div>
                       </div>
                     </div>
                   ))
@@ -692,30 +759,83 @@ export default function App() {
           {/* TAB 3: CERTIFICATION */}
           {activeTab === 'cert' && (
             <div className="space-y-6 animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
-                  <Award className="w-6 h-6 text-amber-400" />
-                  자격증 로드맵
-                </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
+                    <Award className="w-6 h-6 text-amber-400" />
+                    자격증 아카이브
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">자격증 종목별로 학습 요약 노트 및 기출 포인트를 모아봅니다.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setNewNoteCategory('cert');
+                    setNewNoteData((prev) => ({ ...prev, subCategory: selectedCertTab === 'ALL' ? '정보처리기사' : selectedCertTab }));
+                    setIsModalOpen(true);
+                  }}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>새 자격증 노트 추가</span>
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {certList.map((cert) => (
-                  <div key={cert.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative">
-                    <button
-                      onClick={() => handleDeleteItem('cert', cert.id)}
-                      title="자격증 항목 삭제"
-                      className="absolute top-5 right-5 p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      D-{cert.dDay}
-                    </span>
-                    <h3 className="text-lg font-bold text-white mt-2">{cert.title}</h3>
-                    <p className="text-xs text-slate-400 mt-1">시험일: {cert.targetDate} | {cert.subject}</p>
-                  </div>
+              {/* 자격증별 필터 탭 바 */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-800/80">
+                <Filter className="w-3.5 h-3.5 text-slate-500 shrink-0 mr-1" />
+                {certTabOptions.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setSelectedCertTab(tab)}
+                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+                      selectedCertTab === tab
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    }`}
+                  >
+                    {tab === 'ALL' ? '전체 자격증 보기' : tab}
+                  </button>
                 ))}
+              </div>
+
+              {/* 공부 내용 카드 리스트 */}
+              <div className="space-y-4">
+                {filteredCertNotes.length === 0 ? (
+                  <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800">
+                    <BookOpen className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                    <p className="text-slate-400 text-sm">해당 자격증에 등록된 공부 노트가 없습니다.</p>
+                  </div>
+                ) : (
+                  filteredCertNotes.map((note) => (
+                    <div key={note.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3.5">
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="text-xs font-bold px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            {note.certName}
+                          </span>
+                          <h3 className="text-base font-bold text-white">{note.title}</h3>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteItem('certNote', note.id)}
+                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800/80 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {note.summary}
+                      </div>
+
+                      {note.keyPoint && (
+                        <div className="p-3 bg-amber-950/20 border border-amber-900/30 rounded-xl text-xs">
+                          <span className="font-semibold text-amber-400 block mb-1">🔑 핵심 시험 포인트 & 오답 유의사항</span>
+                          <p className="text-slate-300">{note.keyPoint}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -738,7 +858,7 @@ export default function App() {
               </div>
 
               <div className="space-y-6">
-                {filteredCs.map((cs) => (
+                {csList.map((cs) => (
                   <div key={cs.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                       <div>
@@ -817,10 +937,119 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {/* TAB 6: SETTINGS (플랫폼 관리 세팅) */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6 animate-fadeIn max-w-3xl">
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
+                  <Settings className="w-6 h-6 text-purple-400" />
+                  환경 설정 (플랫폼 세팅)
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  알고리즘 문제 풀이 등록 시 사용할 플랫폼 목록을 직접 추가하거나 삭제하여 관리합니다. 변경 사항은 GitHub 저장소에 자동 동기화됩니다.
+                </p>
+              </div>
+
+              {/* 새 플랫폼 추가 폼 */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <h3 className="text-sm font-bold text-slate-200">새 플랫폼 추가</h3>
+                <form onSubmit={handleAddPlatform} className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="예: CodeTree, LeetCode, AtCoder, HackerRank..."
+                    value={newPlatformInput}
+                    onChange={(e) => setNewPlatformInput(e.target.value)}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSyncing}
+                    className="px-5 py-2 bg-purple-600 hover:bg-purple-500 font-semibold text-white text-xs rounded-xl transition shadow flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>추가</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* 현재 활성 플랫폼 목록 */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <h3 className="text-sm font-bold text-slate-200">사용 중인 플랫폼 목록 ({platforms.length}개)</h3>
+                  <span className="text-xs text-slate-500">x 버튼을 누르면 목록에서 삭제됩니다.</span>
+                </div>
+
+                <div className="flex flex-wrap gap-2.5 pt-1">
+                  {platforms.map((p) => (
+                    <div
+                      key={p}
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 font-medium hover:border-purple-500/50 transition"
+                    >
+                      <span className="font-mono text-purple-300 font-semibold">{p}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePlatform(p)}
+                        title={`${p} 삭제`}
+                        className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
-      {/* TOKEN SETTINGS MODAL */}
+      {/* FLASHCARD MODAL */}
+      {flashcardOpen && allFlashcards.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300">
+                {allFlashcards[currentCardIndex].certName} ({currentCardIndex + 1}/{allFlashcards.length})
+              </span>
+              <button onClick={() => setFlashcardOpen(false)} className="text-slate-400 text-xs px-2 py-1 rounded bg-slate-800">닫기</button>
+            </div>
+
+            <div
+              onClick={() => setIsFlipped(!isFlipped)}
+              className="min-h-[180px] p-6 bg-slate-950 rounded-2xl border border-slate-800 flex flex-col items-center justify-center text-center cursor-pointer hover:border-amber-500/40 transition select-none"
+            >
+              <span className="text-[11px] text-slate-500 mb-2">{isFlipped ? '정답 (Answer)' : '문제 (Question) - 클릭해서 정답 확인'}</span>
+              <p className="text-sm font-semibold text-slate-200">
+                {isFlipped ? allFlashcards[currentCardIndex].a : allFlashcards[currentCardIndex].q}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                disabled={currentCardIndex === 0}
+                onClick={() => { setIsFlipped(false); setCurrentCardIndex((prev) => prev - 1); }}
+                className="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300 disabled:opacity-40"
+              >
+                이전 카드
+              </button>
+              <button onClick={() => setIsFlipped(!isFlipped)} className="px-4 py-2 rounded-xl bg-indigo-600/20 text-indigo-400 text-xs font-medium">
+                카드 뒤집기
+              </button>
+              <button
+                disabled={currentCardIndex === allFlashcards.length - 1}
+                onClick={() => { setIsFlipped(false); setCurrentCardIndex((prev) => prev + 1); }}
+                className="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300 disabled:opacity-40"
+              >
+                다음 카드
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOKEN MODAL */}
       {isTokenModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
@@ -829,13 +1058,8 @@ export default function App() {
                 <Key className="w-4 h-4 text-indigo-400" />
                 GitHub Personal Access Token 설정
               </h3>
-              <button onClick={() => setIsTokenModalOpen(false)} className="text-slate-400 text-xs px-2 py-1 rounded bg-slate-800">
-                닫기
-              </button>
+              <button onClick={() => setIsTokenModalOpen(false)} className="text-slate-400 text-xs px-2 py-1 rounded bg-slate-800">닫기</button>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              방금 발급받은 Fine-grained Token(`github_pat_...`)을 입력하세요. 브라우저에 안전하게 보관되어 어떤 기기에서든 추가/삭제가 GitHub에 영구 동기화됩니다.
-            </p>
             <input
               type="password"
               placeholder="github_pat_..."
@@ -843,19 +1067,15 @@ export default function App() {
               onChange={(e) => setTokenInput(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
             />
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button onClick={() => setIsTokenModalOpen(false)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">
-                취소
-              </button>
-              <button onClick={handleSaveToken} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white text-xs shadow">
-                토큰 저장 및 동기화
-              </button>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setIsTokenModalOpen(false)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">취소</button>
+              <button onClick={handleSaveToken} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white text-xs">저장 및 동기화</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* NEW NOTE MODAL */}
+      {/* NEW NOTE MODAL (커스텀 플랫폼 연동) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -870,13 +1090,20 @@ export default function App() {
             <form onSubmit={handleCreateNote} className="space-y-4 text-xs">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1.5">카테고리</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setNewNoteCategory('algo')}
                     className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'algo' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
                   >
                     알고리즘
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewNoteCategory('cert')}
+                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'cert' ? 'bg-amber-500/20 border-amber-500 text-amber-300' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                  >
+                    자격증
                   </button>
                   <button
                     type="button"
@@ -895,31 +1122,41 @@ export default function App() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">제목</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="제목을 입력하세요"
-                  value={newNoteData.title}
-                  onChange={(e) => setNewNoteData({ ...newNoteData, title: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
+              {/* 알고리즘 플랫폼 선택 (커스텀 플랫폼 목록 연동) */}
               {newNoteCategory === 'algo' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">플랫폼</label>
-                    <select
-                      value={newNoteData.platform}
-                      onChange={(e) => setNewNoteData({ ...newNoteData, platform: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
-                    >
-                      <option value="Baekjoon">백준</option>
-                      <option value="SWEA">SWEA</option>
-                      <option value="Programmers">프로그래머스</option>
-                    </select>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-300 font-semibold">플랫폼 선택</label>
+                      <button
+                        type="button"
+                        onClick={() => setCustomPlatformMode(!customPlatformMode)}
+                        className="text-[10px] text-purple-400 hover:underline"
+                      >
+                        {customPlatformMode ? '목록에서 선택' : '+ 직접 입력'}
+                      </button>
+                    </div>
+
+                    {customPlatformMode ? (
+                      <input
+                        type="text"
+                        required
+                        placeholder="새 플랫폼 이름 입력"
+                        value={newNoteData.platform}
+                        onChange={(e) => setNewNoteData({ ...newNoteData, platform: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500"
+                      />
+                    ) : (
+                      <select
+                        value={newNoteData.platform}
+                        onChange={(e) => setNewNoteData({ ...newNoteData, platform: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                      >
+                        {platforms.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div>
                     <label className="block text-slate-300 font-semibold mb-1">난이도</label>
@@ -934,22 +1171,38 @@ export default function App() {
                 </div>
               )}
 
+              {newNoteCategory === 'cert' && (
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">자격증 종목</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="예: 정보처리기사, SQLD, 리눅스마스터 등"
+                    value={newNoteData.subCategory}
+                    onChange={(e) => setNewNoteData({ ...newNoteData, subCategory: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200"
+                  />
+                </div>
+              )}
+
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">태그 (쉼표 구분)</label>
+                <label className="block text-slate-300 font-semibold mb-1">제목</label>
                 <input
                   type="text"
-                  placeholder="BFS, DP, OS, OPIc"
-                  value={newNoteData.tags}
-                  onChange={(e) => setNewNoteData({ ...newNoteData, tags: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200"
+                  required
+                  placeholder="제목을 입력하세요"
+                  value={newNoteData.title}
+                  onChange={(e) => setNewNoteData({ ...newNoteData, title: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">핵심 요약</label>
                 <textarea
-                  rows={2}
-                  placeholder="요약 내용을 기술하세요"
+                  rows={3}
+                  required
+                  placeholder="요약 내용 및 핵심 아이디어를 작성하세요"
                   value={newNoteData.summary}
                   onChange={(e) => setNewNoteData({ ...newNoteData, summary: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200"
@@ -958,7 +1211,7 @@ export default function App() {
 
               {newNoteCategory === 'algo' && (
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">코드</label>
+                  <label className="block text-slate-300 font-semibold mb-1">풀이 코드</label>
                   <textarea
                     rows={5}
                     placeholder="풀이 코드를 입력하세요"
@@ -968,6 +1221,17 @@ export default function App() {
                   />
                 </div>
               )}
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">태그 (쉼표 구분)</label>
+                <input
+                  type="text"
+                  placeholder="BFS, DP, 구현"
+                  value={newNoteData.tags}
+                  onChange={(e) => setNewNoteData({ ...newNoteData, tags: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200"
+                />
+              </div>
 
               <div className="pt-2 flex justify-end gap-2">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300">
