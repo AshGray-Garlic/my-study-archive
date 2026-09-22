@@ -720,7 +720,7 @@ export default function App() {
                       </div>
 
                       <div className="p-5 space-y-4">
-                        <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-300">
+                        <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                           {algo.summary}
                         </div>
 
@@ -781,8 +781,8 @@ export default function App() {
                     key={tab}
                     onClick={() => setSelectedCertTab(tab)}
                     className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${selectedCertTab === tab
-                        ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                        : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow'
+                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
                       }`}
                   >
                     {tab === 'ALL' ? '전체 자격증 보기' : tab}
@@ -822,7 +822,7 @@ export default function App() {
                       {note.keyPoint && (
                         <div className="p-3 bg-amber-950/20 border border-amber-900/30 rounded-xl text-xs">
                           <span className="font-semibold text-amber-400 block mb-1">🔑 핵심 시험 포인트 & 오답 유의사항</span>
-                          <p className="text-slate-300">{note.keyPoint}</p>
+                          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">{note.keyPoint}</p>
                         </div>
                       )}
                     </div>
@@ -867,7 +867,7 @@ export default function App() {
                       </button>
                     </div>
 
-                    <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-300">
+                    <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                       {cs.concept}
                     </div>
                   </div>
