@@ -442,7 +442,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">
-                DevStudy <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">Hub</span>
+                AGG Study <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">Hub</span>
               </h1>
               <p className="text-xs text-slate-400">지식 아카이브 & 학습 관리</p>
             </div>
@@ -610,7 +610,7 @@ export default function App() {
                       Personal Learning Archive
                     </span>
                     <h2 className="text-2xl md:text-3xl font-bold text-white mt-3 mb-2">
-                      환영합니다, 엔지니어님! 🚀
+                      Welcome, Ash Gray! 🚀
                     </h2>
                     <p className="text-slate-400 text-sm leading-relaxed">
                       상단 검색창에서 알고리즘 문제, 자격증 핵심 요약, CS 이론, 어학 표현을 통합 검색할 수 있습니다.
