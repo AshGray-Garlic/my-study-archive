@@ -1,5 +1,24 @@
 {
-  "algorithms": [],
+  "algorithms": [
+    {
+      "id": "algo-1790064695825",
+      "title": "현주가 좋아하는 제곱근 놀이",
+      "platform": "SWEA",
+      "problemNumber": "NEW",
+      "difficulty": "D3",
+      "tags": [
+        "구현"
+      ],
+      "timeComplexity": "O(N)",
+      "spaceComplexity": "O(N)",
+      "status": "Solved",
+      "summary": "문제점\n\n1. cal() 메소드의 시간복잡도 : O(n)\n2. while문 내에 int tmp 를 사용 하여 범위적으로 제한을 받음",
+      "keyPoint": "핵심 알고리즘 접근법",
+      "codeLanguage": "java",
+      "code": "import java.io.*;\nimport java.util.*;\n\npublic class Solution {\n\tstatic long n;\n\tpublic static void main(String[] args) throws IOException {\n\t\tBufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n\t\tStringBuilder sb = new StringBuilder();\n\t\tint T = Integer.parseInt(br.readLine().trim());\n\t\tfor (int test_case = 1; test_case <= T; test_case++) {\n\t\t\tn = Long.parseLong(br.readLine().trim());\n\t\t\tint count = 0;\n\t\t\twhile(n != 2) {\n\t\t\t\tlong tmp = cal();\n\t\t\t\tcount += tmp * tmp - n + 1;\n\t\t\t\tn = tmp;\n\t\t\t}\n\t\t\tSystem.out.println(\"#\" + test_case + \" \" + count);\n\t\t}\n\t}\n\tstatic long cal() {\n\t\tlong tmp = (int)Math.sqrt(n);\n\t\tif(tmp * tmp >= n)\n\t\t\treturn tmp;\n\t\telse\n\t\t\treturn tmp + 1;\n\t}\n}",
+      "retrospective": "새로 추가된 학습 기록"
+    }
+  ],
   "certifications": [],
   "certNotes": [],
   "csTopics": [],
