@@ -1,6 +1,12 @@
 {
   "algorithms": [],
   "certifications": [],
+  "certNotes": [],
   "csTopics": [],
-  "languages": []
+  "languages": [],
+  "platforms": [
+    "SWEA",
+    "Programmers",
+    "CodeTree"
+  ]
 }
