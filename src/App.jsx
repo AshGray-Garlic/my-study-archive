@@ -232,8 +232,8 @@ export default function App() {
   const [newNoteCategory, setNewNoteCategory] = useState('algo');
   const [newNoteData, setNewNoteData] = useState({
     title: '',
-    platform: 'Baekjoon',
-    difficulty: 'Silver',
+    platform: 'SWEA',
+    difficulty: 'D3',
     tags: '',
     code: '',
     summary: '',
@@ -386,8 +386,8 @@ export default function App() {
 
     setNewNoteData({
       title: '',
-      platform: updatedPlatforms[0] || 'Baekjoon',
-      difficulty: 'Silver',
+      platform: updatedPlatforms[0] || 'SWEA',
+      difficulty: 'D3',
       tags: '',
       code: '',
       summary: '',
@@ -1162,7 +1162,7 @@ export default function App() {
                     <label className="block text-slate-300 font-semibold mb-1">난이도</label>
                     <input
                       type="text"
-                      placeholder="Silver I, D3, Level 2..."
+                      placeholder="D3, Silver I, Level 2..."
                       value={newNoteData.difficulty}
                       onChange={(e) => setNewNoteData({ ...newNoteData, difficulty: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
