@@ -1,22 +1,5 @@
 {
-  "algorithms": [
-    {
-      "id": "algo-1",
-      "title": "미로 탐색 (BFS 최단 경로)",
-      "platform": "Baekjoon",
-      "problemNumber": "2178",
-      "difficulty": "Silver I",
-      "tags": ["BFS", "그래프 탐색", "최단거리"],
-      "timeComplexity": "O(N × M)",
-      "spaceComplexity": "O(N × M)",
-      "status": "Solved",
-      "summary": "NxM 크기의 배열로 표현되는 미로 최단 경로 문제",
-      "keyPoint": "가중치가 없는 그래프에서 최단 거리는 BFS 활용",
-      "codeLanguage": "java",
-      "code": "// solution code...",
-      "retrospective": "큐 삽입 시점에 방문 처리 필수"
-    }
-  ],
+  "algorithms": [],
   "certifications": [],
   "csTopics": [],
   "languages": []
