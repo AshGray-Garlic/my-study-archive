@@ -31,7 +31,7 @@ const REPO_OWNER = 'AshGray-Garlic';
 const REPO_NAME = 'my-study-archive';
 const FILE_PATH = 'public/data/db.json';
 
-const DEFAULT_PLATFORMS = ['Baekjoon', 'SWEA', 'Programmers', 'LeetCode', 'CodeTree'];
+const DEFAULT_PLATFORMS = ['SWEA', 'Programmers', 'LeetCode', 'CodeTree'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -52,7 +52,7 @@ export default function App() {
   const [certNotes, setCertNotes] = useState([]);
   const [csList, setCsList] = useState([]);
   const [langList, setLangList] = useState([]);
-  
+
   // Custom Platform Settings State
   const [platforms, setPlatforms] = useState(DEFAULT_PLATFORMS);
   const [newPlatformInput, setNewPlatformInput] = useState('');
@@ -463,9 +463,8 @@ export default function App() {
           <nav className="space-y-1.5">
             <button
               onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <LayoutDashboard className="w-4 h-4" />
@@ -475,9 +474,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('algo'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Code2 className="w-4 h-4 text-emerald-400" />
@@ -490,9 +488,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('cert'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Award className="w-4 h-4 text-amber-400" />
@@ -505,9 +502,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('cs'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Cpu className="w-4 h-4 text-blue-400" />
@@ -520,9 +516,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('language'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'language' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'language' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Languages className="w-4 h-4 text-rose-400" />
@@ -535,9 +530,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('settings'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'settings' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'settings' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Settings className="w-4 h-4 text-purple-400" />
@@ -637,10 +631,10 @@ export default function App() {
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
                   <div className="flex items-center justify-between text-slate-400 mb-2">
-                    <span className="text-xs font-medium">활성 플랫폼</span>
-                    <Settings className="w-4 h-4 text-purple-400" />
+                    <span className="text-xs font-medium">컴퓨터 구조 & CS</span>
+                    <Cpu className="w-4 h-4 text-blue-400" />
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{platforms.length} <span className="text-xs text-slate-400 font-sans font-normal">개</span></div>
+                  <div className="text-2xl font-bold text-white font-mono">{csList.length} <span className="text-xs text-slate-400 font-sans font-normal">주제</span></div>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
                   <div className="flex items-center justify-between text-slate-400 mb-2">
@@ -690,9 +684,8 @@ export default function App() {
                   <button
                     key={tag}
                     onClick={() => setSelectedTag(tag)}
-                    className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${
-                      selectedTag === tag ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                    }`}
+                    className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${selectedTag === tag ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
                   >
                     {tag}
                   </button>
@@ -787,11 +780,10 @@ export default function App() {
                   <button
                     key={tab}
                     onClick={() => setSelectedCertTab(tab)}
-                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
-                      selectedCertTab === tab
+                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${selectedCertTab === tab
                         ? 'bg-amber-500 text-slate-950 font-bold shadow'
                         : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                    }`}
+                      }`}
                   >
                     {tab === 'ALL' ? '전체 자격증 보기' : tab}
                   </button>
