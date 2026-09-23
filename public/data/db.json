@@ -1,6 +1,24 @@
 {
   "algorithms": [
     {
+      "id": "algo-1790153330594",
+      "title": "a",
+      "platform": "SDS",
+      "problemNumber": "NEW",
+      "difficulty": "",
+      "tags": [
+        "구현"
+      ],
+      "timeComplexity": "O(N)",
+      "spaceComplexity": "O(N)",
+      "status": "Solved",
+      "summary": "a",
+      "keyPoint": "핵심 알고리즘 접근법",
+      "codeLanguage": "java",
+      "code": "a",
+      "retrospective": "학습 기록"
+    },
+    {
       "id": "algo-1790064950185",
       "title": "현주가 좋아하는 제곱근 놀이",
       "platform": "SWEA",
@@ -53,7 +71,8 @@
   "platforms": [
     "SWEA",
     "Programmers",
-    "CodeTree"
+    "CodeTree",
+    "SDS"
   ],
   "events": [
     {
