@@ -847,6 +847,27 @@ export default function App() {
     });
   }, [algoList, searchQuery, selectedTag]);
 
+  const filteredCsList = useMemo(() => {
+    return csList.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.concept.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [csList, searchQuery]);
+
+  const filteredLangList = useMemo(() => {
+    return langList.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.situation?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.dialogue?.some(
+          (d) => d.en.toLowerCase().includes(searchQuery.toLowerCase()) || d.ko.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    );
+  }, [langList, searchQuery]);
+
   // Calendar selected date events & holiday info
   const selectedDateEvents = useMemo(() => {
     return eventsList.filter((evt) => evt.date === selectedDateStr);
@@ -859,7 +880,6 @@ export default function App() {
       {/* 라이트 모드 고대비 코드 문법 색상 인라인 스타일 */}
       <style>{`
         ${!isDark ? `
-          /* 라이트 모드 전용 고대비 토큰 색상 보정 */
           .token.comment, .token.prolog, .token.doctype, .token.cdata { color: #64748b !important; font-style: italic; }
           .token.punctuation { color: #475569 !important; }
           .token.property, .token.tag, .token.boolean, .token.constant, .token.symbol { color: #dc2626 !important; font-weight: 600; }
@@ -1017,7 +1037,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen relative">
-        {/* EXPANDED CODE VIEWER OVERLAY (라이트/다크 테마 및 고대비 완벽 연동) */}
+        {/* EXPANDED CODE VIEWER OVERLAY */}
         {expandedCodeData && (
           <div className={`absolute inset-0 z-40 flex flex-col animate-fadeIn ${c.codeExpandedBg}`}>
             <div className={`px-6 py-4 border-b flex items-center justify-between shrink-0 shadow-md ${c.codeExpandedHeader}`}>
@@ -1074,7 +1094,7 @@ export default function App() {
             <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${c.dimText}`} />
             <input
               type="text"
-              placeholder="개념, 기출 요약, 알고리즘 검색..."
+              placeholder="전체 아카이브 통합 검색 (알고리즘, 자격증, CS, 영어)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full rounded-xl pl-10 pr-4 py-2 placeholder-slate-400 focus:outline-none transition-colors text-sm ${c.inputBg}`}
@@ -1108,11 +1128,198 @@ export default function App() {
         </header>
 
         <div className="p-6 md:p-8 space-y-8 flex-1">
-          {/* TAB 1: DASHBOARD */}
-          {activeTab === 'dashboard' && (
-            <div className="space-y-8 animate-fadeIn">
-              {!searchQuery.trim() ? (
-                <>
+          {/* 어떤 탭에 있든 검색어(searchQuery)가 입력되어 있으면 최우선으로 글로벌 통합 검색 뷰를 렌더링 */}
+          {searchQuery.trim() ? (
+            <div className="space-y-6 animate-fadeIn">
+              <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Search className="w-5 h-5 text-indigo-400" />
+                  통합 검색 결과: <span className="text-indigo-500 font-mono">"{searchQuery}"</span>
+                </h3>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className={`text-xs px-2.5 py-1 rounded-lg border ${c.buttonSec}`}
+                >
+                  검색어 초기화 (원래 화면으로)
+                </button>
+              </div>
+
+              {/* 알고리즘 검색 결과 */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-emerald-500 flex items-center gap-1.5">
+                    <Code2 className="w-4 h-4" />
+                    알고리즘 ({filteredAlgorithms.length})
+                  </h4>
+                  {filteredAlgorithms.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('algo')}
+                      className={`text-xs hover:text-emerald-500 flex items-center gap-1 ${c.subText}`}
+                    >
+                      알고리즘 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {filteredAlgorithms.length === 0 ? (
+                  <p className={`text-xs py-3 px-4 rounded-xl border ${c.cardInnerBg} ${c.dimText}`}>
+                    일치하는 알고리즘 문제가 없습니다.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filteredAlgorithms.slice(0, 4).map((algo) => (
+                      <div
+                        key={algo.id}
+                        onClick={() => setActiveTab('algo')}
+                        className={`p-4 border hover:border-emerald-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            {algo.platform} #{algo.problemNumber}
+                          </span>
+                          <span className={`text-[11px] ${c.dimText}`}>{algo.difficulty}</span>
+                        </div>
+                        <h5 className="text-sm font-bold truncate">{algo.title}</h5>
+                        <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
+                          {algo.summary}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 자격증 검색 결과 */}
+              <div className={`space-y-3 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-amber-500 flex items-center gap-1.5">
+                    <Award className="w-4 h-4" />
+                    자격증 노트 ({filteredCertNotes.length})
+                  </h4>
+                  {filteredCertNotes.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('cert')}
+                      className={`text-xs hover:text-amber-500 flex items-center gap-1 ${c.subText}`}
+                    >
+                      자격증 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {filteredCertNotes.length === 0 ? (
+                  <p className={`text-xs py-3 px-4 rounded-xl border ${c.cardInnerBg} ${c.dimText}`}>
+                    일치하는 자격증 노트가 없습니다.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filteredCertNotes.slice(0, 4).map((note) => (
+                      <div
+                        key={note.id}
+                        onClick={() => setActiveTab('cert')}
+                        className={`p-4 border hover:border-amber-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                      >
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          {note.certName}
+                        </span>
+                        <h5 className="text-sm font-bold truncate">{note.title}</h5>
+                        <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
+                          {note.summary}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* CS 토픽 검색 결과 */}
+              <div className={`space-y-3 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-blue-500 flex items-center gap-1.5">
+                    <Cpu className="w-4 h-4" />
+                    컴퓨터 구조 & CS ({filteredCsList.length})
+                  </h4>
+                  {filteredCsList.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('cs')}
+                      className={`text-xs hover:text-blue-500 flex items-center gap-1 ${c.subText}`}
+                    >
+                      CS 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {filteredCsList.length === 0 ? (
+                  <p className={`text-xs py-3 px-4 rounded-xl border ${c.cardInnerBg} ${c.dimText}`}>
+                    일치하는 CS 이론이 없습니다.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filteredCsList.slice(0, 4).map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => setActiveTab('cs')}
+                        className={`p-4 border hover:border-blue-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                      >
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                          {item.domain}
+                        </span>
+                        <h5 className="text-sm font-bold truncate">{item.title}</h5>
+                        <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
+                          {item.concept}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 어학 검색 결과 */}
+              <div className={`space-y-3 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-rose-500 flex items-center gap-1.5">
+                    <Languages className="w-4 h-4" />
+                    어학 및 테크 영어 ({filteredLangList.length})
+                  </h4>
+                  {filteredLangList.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('language')}
+                      className={`text-xs hover:text-rose-500 flex items-center gap-1 ${c.subText}`}
+                    >
+                      어학 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {filteredLangList.length === 0 ? (
+                  <p className={`text-xs py-3 px-4 rounded-xl border ${c.cardInnerBg} ${c.dimText}`}>
+                    일치하는 영어 표현이 없습니다.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filteredLangList.slice(0, 4).map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => setActiveTab('language')}
+                        className={`p-4 border hover:border-rose-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                      >
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                          {item.category}
+                        </span>
+                        <h5 className="text-sm font-bold truncate">{item.title}</h5>
+                        <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
+                          {item.situation}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* TAB 1: DASHBOARD (검색어 없을 때) */}
+              {activeTab === 'dashboard' && (
+                <div className="space-y-8 animate-fadeIn">
                   <div className={`p-6 md:p-8 rounded-2xl border ${
                     isDark
                       ? 'bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border-indigo-800/40'
@@ -1393,764 +1600,624 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                </>
-              ) : (
-                /* 통합 검색 결과 뷰 */
-                <div className="space-y-6">
-                  <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                    <h3 className="text-lg font-bold flex items-center gap-2">
-                      <Search className="w-5 h-5 text-indigo-400" />
-                      통합 검색 결과: <span className="text-indigo-500 font-mono">"{searchQuery}"</span>
-                    </h3>
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className={`text-xs px-2.5 py-1 rounded-lg border ${c.buttonSec}`}
-                    >
-                      검색어 초기화
-                    </button>
-                  </div>
+                </div>
+              )}
 
-                  {/* 알고리즘 검색 결과 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-emerald-500 flex items-center gap-1.5">
-                        <Code2 className="w-4 h-4" />
-                        알고리즘 ({filteredAlgorithms.length})
-                      </h4>
-                      {filteredAlgorithms.length > 0 && (
-                        <button
-                          onClick={() => setActiveTab('algo')}
-                          className={`text-xs hover:text-emerald-500 flex items-center gap-1 ${c.subText}`}
-                        >
-                          알고리즘 탭으로 이동 <ArrowRight className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-
-                    {filteredAlgorithms.length === 0 ? (
-                      <p className={`text-xs py-3 px-4 rounded-xl border ${c.cardInnerBg} ${c.dimText}`}>
-                        일치하는 알고리즘 문제가 없습니다.
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {filteredAlgorithms.slice(0, 4).map((algo) => (
-                          <div
-                            key={algo.id}
-                            onClick={() => setActiveTab('algo')}
-                            className={`p-4 border hover:border-emerald-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                                {algo.platform} #{algo.problemNumber}
-                              </span>
-                              <span className={`text-[11px] ${c.dimText}`}>{algo.difficulty}</span>
-                            </div>
-                            <h5 className="text-sm font-bold truncate">{algo.title}</h5>
-                            <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
-                              {algo.summary}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 자격증 검색 결과 */}
-                  <div className={`space-y-3 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-amber-500 flex items-center gap-1.5">
-                        <Award className="w-4 h-4" />
-                        자격증 노트 ({filteredCertNotes.length})
-                      </h4>
-                      {filteredCertNotes.length > 0 && (
-                        <button
-                          onClick={() => setActiveTab('cert')}
-                          className={`text-xs hover:text-amber-500 flex items-center gap-1 ${c.subText}`}
-                        >
-                          자격증 탭으로 이동 <ArrowRight className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-
-                    {filteredCertNotes.length === 0 ? (
-                      <p className={`text-xs py-3 px-4 rounded-xl border ${c.cardInnerBg} ${c.dimText}`}>
-                        일치하는 자격증 노트가 없습니다.
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {filteredCertNotes.slice(0, 4).map((note) => (
-                          <div
-                            key={note.id}
-                            onClick={() => setActiveTab('cert')}
-                            className={`p-4 border hover:border-amber-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
-                          >
-                            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                              {note.certName}
-                            </span>
-                            <h5 className="text-sm font-bold truncate">{note.title}</h5>
-                            <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
-                              {note.summary}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CS 토픽 검색 결과 */}
-                  <div className={`space-y-3 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-blue-500 flex items-center gap-1.5">
-                        <Cpu className="w-4 h-4" />
-                        컴퓨터 구조 & CS ({csList.filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.concept.toLowerCase().includes(searchQuery.toLowerCase())).length})
-                      </h4>
+              {/* TAB 2: ALGORITHM */}
+              {activeTab === 'algo' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                      <Code2 className="w-6 h-6 text-emerald-500" />
+                      알고리즘 아카이브
+                    </h2>
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setActiveTab('cs')}
-                        className={`text-xs hover:text-blue-500 flex items-center gap-1 ${c.subText}`}
+                        onClick={() => setActiveTab('settings')}
+                        className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
                       >
-                        CS 탭으로 이동 <ArrowRight className="w-3 h-3" />
+                        <Settings className="w-3.5 h-3.5 text-purple-400" />
+                        <span>환경 설정</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditMode(false);
+                          setEditingId(null);
+                          setNewNoteCategory('algo');
+                          if (platforms.length > 0) {
+                            setNewNoteData({
+                              title: '',
+                              platform: platforms[0],
+                              difficulty: '',
+                              tags: '',
+                              code: '',
+                              summary: '',
+                              keyPoint: '',
+                              subCategory: '',
+                              certQuestion: '',
+                              certAnswer: ''
+                            });
+                          }
+                          setIsModalOpen(true);
+                        }}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>새 문제 풀이 등록</span>
                       </button>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {csList
-                        .filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.concept.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .slice(0, 4)
-                        .map((item) => (
-                          <div
-                            key={item.id}
-                            onClick={() => setActiveTab('cs')}
-                            className={`p-4 border hover:border-blue-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
-                          >
-                            <span className="text-[11px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                              {item.domain}
-                            </span>
-                            <h5 className="text-sm font-bold truncate">{item.title}</h5>
-                            <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
-                              {item.concept}
-                            </p>
+                  {/* Tag Filters */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                    <Filter className={`w-3.5 h-3.5 shrink-0 ${c.dimText}`} />
+                    {allAlgoTags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => setSelectedTag(tag)}
+                        className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${
+                          selectedTag === tag
+                            ? 'bg-emerald-500 text-white font-bold'
+                            : `${c.buttonSec} border`
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Problem List */}
+                  <div className="space-y-6">
+                    {filteredAlgorithms.length === 0 ? (
+                      <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
+                        <p className={`text-sm ${c.dimText}`}>해당 조건의 알고리즘 풀이가 없습니다.</p>
+                      </div>
+                    ) : (
+                      filteredAlgorithms.map((algo) => (
+                        <div key={algo.id} className={`border rounded-2xl overflow-hidden shadow-sm ${c.cardBg}`}>
+                          <div className={`p-5 border-b flex items-center justify-between gap-3 ${isDark ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200 bg-slate-50/70'}`}>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className={`font-mono font-bold rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 ${typo.badge}`}>
+                                {algo.platform} #{algo.problemNumber}
+                              </span>
+                              <h3 className={typo.cardTitle}>{algo.title}</h3>
+                              <span className={`rounded border ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-700 border-slate-300'} ${typo.badge}`}>
+                                {algo.difficulty}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenEdit('algo', algo)}
+                                title="수정하기"
+                                className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem('algo', algo.id)}
+                                title="삭제하기"
+                                className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
-                        ))}
-                    </div>
+
+                          <div className="p-5 space-y-4">
+                            <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
+                              {algo.summary}
+                            </div>
+
+                            {/* Code Container */}
+                            {algo.code && (
+                              <div className={`relative rounded-xl overflow-hidden border group ${c.codeContainer}`}>
+                                <div className={`flex items-center justify-between px-4 py-2 border-b text-xs ${c.codeHeader}`}>
+                                  <span className="font-mono uppercase text-emerald-500 font-semibold">{algo.codeLanguage || 'code'}</span>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedCodeData(algo)}
+                                      className={`flex items-center gap-1 text-[11px] px-2 py-1 rounded-md transition border ${c.buttonSec}`}
+                                      title="전체화면으로 보기"
+                                    >
+                                      <Maximize2 className="w-3 h-3 text-emerald-500" />
+                                      <span>크게 보기</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopy(algo.id, algo.code)}
+                                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition border ${c.buttonSec}`}
+                                    >
+                                      {copiedId === algo.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                      <span>{copiedId === algo.id ? '복사됨!' : '코드 복사'}</span>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div
+                                  onClick={() => setExpandedCodeData(algo)}
+                                  className="cursor-pointer relative"
+                                  title="클릭하면 좌측 바 제외 전체화면으로 코드가 확대됩니다."
+                                >
+                                  <CodeBlock
+                                    code={algo.code}
+                                    language={algo.codeLanguage || 'java'}
+                                    className={`p-4 font-mono overflow-x-auto max-h-64 scrollbar-thin ${typo.codePre}`}
+                                  />
+                                  <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors flex items-center justify-center pointer-events-none">
+                                    <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-xs px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 border ${c.buttonSec}`}>
+                                      <Maximize2 className="w-3.5 h-3.5 text-emerald-500" />
+                                      <span>클릭하여 전체화면으로 보기</span>
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
-            </div>
-          )}
 
-          {/* TAB 2: ALGORITHM */}
-          {activeTab === 'algo' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                  <Code2 className="w-6 h-6 text-emerald-500" />
-                  알고리즘 아카이브
-                </h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
-                  >
-                    <Settings className="w-3.5 h-3.5 text-purple-400" />
-                    <span>환경 설정</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditMode(false);
-                      setEditingId(null);
-                      setNewNoteCategory('algo');
-                      if (platforms.length > 0) {
-                        setNewNoteData({
-                          title: '',
-                          platform: platforms[0],
-                          difficulty: '',
-                          tags: '',
-                          code: '',
-                          summary: '',
-                          keyPoint: '',
-                          subCategory: '',
-                          certQuestion: '',
-                          certAnswer: ''
-                        });
-                      }
-                      setIsModalOpen(true);
-                    }}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>새 문제 풀이 등록</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Tag Filters */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                <Filter className={`w-3.5 h-3.5 shrink-0 ${c.dimText}`} />
-                {allAlgoTags.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => setSelectedTag(tag)}
-                    className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${
-                      selectedTag === tag
-                        ? 'bg-emerald-500 text-white font-bold'
-                        : `${c.buttonSec} border`
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-
-              {/* Problem List */}
-              <div className="space-y-6">
-                {filteredAlgorithms.length === 0 ? (
-                  <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
-                    <p className={`text-sm ${c.dimText}`}>해당 조건의 알고리즘 풀이가 없습니다.</p>
+              {/* TAB 3: CERTIFICATION */}
+              {activeTab === 'cert' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                        <Award className="w-6 h-6 text-amber-500" />
+                        자격증 아카이브
+                      </h2>
+                      <p className={`text-xs mt-1 ${c.dimText}`}>자격증 종목별로 학습 요약 노트 및 기출 포인트를 모아봅니다.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
+                      >
+                        <Settings className="w-3.5 h-3.5 text-purple-400" />
+                        <span>환경 설정</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditMode(false);
+                          setEditingId(null);
+                          setNewNoteCategory('cert');
+                          setNewNoteData({
+                            title: '',
+                            platform: 'SWEA',
+                            difficulty: '',
+                            tags: '',
+                            code: '',
+                            summary: '',
+                            keyPoint: '',
+                            subCategory: selectedCertTab === 'ALL' ? '정보처리기사' : selectedCertTab,
+                            certQuestion: '',
+                            certAnswer: ''
+                          });
+                          setIsModalOpen(true);
+                        }}
+                        className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>새 자격증 노트 추가</span>
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  filteredAlgorithms.map((algo) => (
-                    <div key={algo.id} className={`border rounded-2xl overflow-hidden shadow-sm ${c.cardBg}`}>
-                      <div className={`p-5 border-b flex items-center justify-between gap-3 ${isDark ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200 bg-slate-50/70'}`}>
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className={`font-mono font-bold rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 ${typo.badge}`}>
-                            {algo.platform} #{algo.problemNumber}
-                          </span>
-                          <h3 className={typo.cardTitle}>{algo.title}</h3>
-                          <span className={`rounded border ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-700 border-slate-300'} ${typo.badge}`}>
-                            {algo.difficulty}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleOpenEdit('algo', algo)}
-                            title="수정하기"
-                            className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem('algo', algo.id)}
-                            title="삭제하기"
-                            className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+
+                  {/* 자격증별 필터 탭 바 */}
+                  <div className={`flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                    <Filter className={`w-3.5 h-3.5 shrink-0 mr-1 ${c.dimText}`} />
+                    {certTabOptions.map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setSelectedCertTab(tab)}
+                        className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+                          selectedCertTab === tab
+                            ? 'bg-amber-500 text-white font-bold shadow'
+                            : `${c.buttonSec} border`
+                        }`}
+                      >
+                        {tab === 'ALL' ? '전체 자격증 보기' : tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* 공부 내용 카드 리스트 */}
+                  <div className="space-y-4">
+                    {filteredCertNotes.length === 0 ? (
+                      <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
+                        <BookOpen className={`w-8 h-8 mx-auto mb-2 ${c.dimText}`} />
+                        <p className={`text-sm ${c.dimText}`}>해당 자격증에 등록된 공부 노트가 없습니다.</p>
                       </div>
-
-                      <div className="p-5 space-y-4">
-                        <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
-                          {algo.summary}
-                        </div>
-
-                        {/* Code Container */}
-                        {algo.code && (
-                          <div className={`relative rounded-xl overflow-hidden border group ${c.codeContainer}`}>
-                            <div className={`flex items-center justify-between px-4 py-2 border-b text-xs ${c.codeHeader}`}>
-                              <span className="font-mono uppercase text-emerald-500 font-semibold">{algo.codeLanguage || 'code'}</span>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setExpandedCodeData(algo)}
-                                  className={`flex items-center gap-1 text-[11px] px-2 py-1 rounded-md transition border ${c.buttonSec}`}
-                                  title="전체화면으로 보기"
-                                >
-                                  <Maximize2 className="w-3 h-3 text-emerald-500" />
-                                  <span>크게 보기</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopy(algo.id, algo.code)}
-                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition border ${c.buttonSec}`}
-                                >
-                                  {copiedId === algo.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                                  <span>{copiedId === algo.id ? '복사됨!' : '코드 복사'}</span>
-                                </button>
-                              </div>
+                    ) : (
+                      filteredCertNotes.map((note) => (
+                        <div key={note.id} className={`border rounded-2xl p-5 space-y-3.5 shadow-sm ${c.cardBg}`}>
+                          <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <span className={`font-bold rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 ${typo.badge}`}>
+                                {note.certName}
+                              </span>
+                              <h3 className={typo.cardTitle}>{note.title}</h3>
                             </div>
-
-                            <div
-                              onClick={() => setExpandedCodeData(algo)}
-                              className="cursor-pointer relative"
-                              title="클릭하면 좌측 바 제외 전체화면으로 코드가 확대됩니다."
-                            >
-                              <CodeBlock
-                                code={algo.code}
-                                language={algo.codeLanguage || 'java'}
-                                className={`p-4 font-mono overflow-x-auto max-h-64 scrollbar-thin ${typo.codePre}`}
-                              />
-                              <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors flex items-center justify-center pointer-events-none">
-                                <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-xs px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 border ${c.buttonSec}`}>
-                                  <Maximize2 className="w-3.5 h-3.5 text-emerald-500" />
-                                  <span>클릭하여 전체화면으로 보기</span>
-                                </span>
-                              </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenEdit('cert', note)}
+                                title="수정하기"
+                                className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem('certNote', note.id)}
+                                title="삭제하기"
+                                className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
 
-          {/* TAB 3: CERTIFICATION */}
-          {activeTab === 'cert' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                    <Award className="w-6 h-6 text-amber-500" />
-                    자격증 아카이브
-                  </h2>
-                  <p className={`text-xs mt-1 ${c.dimText}`}>자격증 종목별로 학습 요약 노트 및 기출 포인트를 모아봅니다.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
-                  >
-                    <Settings className="w-3.5 h-3.5 text-purple-400" />
-                    <span>환경 설정</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditMode(false);
-                      setEditingId(null);
-                      setNewNoteCategory('cert');
-                      setNewNoteData({
-                        title: '',
-                        platform: 'SWEA',
-                        difficulty: '',
-                        tags: '',
-                        code: '',
-                        summary: '',
-                        keyPoint: '',
-                        subCategory: selectedCertTab === 'ALL' ? '정보처리기사' : selectedCertTab,
-                        certQuestion: '',
-                        certAnswer: ''
-                      });
-                      setIsModalOpen(true);
-                    }}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>새 자격증 노트 추가</span>
-                  </button>
-                </div>
-              </div>
+                          <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
+                            {note.summary}
+                          </div>
 
-              {/* 자격증별 필터 탭 바 */}
-              <div className={`flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
-                <Filter className={`w-3.5 h-3.5 shrink-0 mr-1 ${c.dimText}`} />
-                {certTabOptions.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setSelectedCertTab(tab)}
-                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
-                      selectedCertTab === tab
-                        ? 'bg-amber-500 text-white font-bold shadow'
-                        : `${c.buttonSec} border`
-                    }`}
-                  >
-                    {tab === 'ALL' ? '전체 자격증 보기' : tab}
-                  </button>
-                ))}
-              </div>
-
-              {/* 공부 내용 카드 리스트 */}
-              <div className="space-y-4">
-                {filteredCertNotes.length === 0 ? (
-                  <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
-                    <BookOpen className={`w-8 h-8 mx-auto mb-2 ${c.dimText}`} />
-                    <p className={`text-sm ${c.dimText}`}>해당 자격증에 등록된 공부 노트가 없습니다.</p>
+                          {note.keyPoint && (
+                            <div className={`p-3.5 rounded-xl border ${isDark ? 'bg-amber-950/20 border-amber-900/30' : 'bg-amber-50/80 border-amber-200/80'}`}>
+                              <span className="font-semibold text-amber-500 block mb-1">🔑 핵심 시험 포인트 & 오답 유의사항</span>
+                              <p className={`whitespace-pre-wrap ${typo.summary}`}>{note.keyPoint}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
                   </div>
-                ) : (
-                  filteredCertNotes.map((note) => (
-                    <div key={note.id} className={`border rounded-2xl p-5 space-y-3.5 shadow-sm ${c.cardBg}`}>
-                      <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <span className={`font-bold rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 ${typo.badge}`}>
-                            {note.certName}
-                          </span>
-                          <h3 className={typo.cardTitle}>{note.title}</h3>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleOpenEdit('cert', note)}
-                            title="수정하기"
-                            className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem('certNote', note.id)}
-                            title="삭제하기"
-                            className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
-                        {note.summary}
-                      </div>
-
-                      {note.keyPoint && (
-                        <div className={`p-3.5 rounded-xl border ${isDark ? 'bg-amber-950/20 border-amber-900/30' : 'bg-amber-50/80 border-amber-200/80'}`}>
-                          <span className="font-semibold text-amber-500 block mb-1">🔑 핵심 시험 포인트 & 오답 유의사항</span>
-                          <p className={`whitespace-pre-wrap ${typo.summary}`}>{note.keyPoint}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: CS TOPICS */}
-          {activeTab === 'cs' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                    <Cpu className="w-6 h-6 text-blue-500" />
-                    컴퓨터 사이언스 & 기술 면접
-                  </h2>
-                  <p className={`text-xs mt-1 ${c.dimText}`}>운영체제, 네트워크, 데이터베이스 등 핵심 CS 이론과 면접 Q&A를 아카이빙합니다.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
-                  >
-                    <Settings className="w-3.5 h-3.5 text-purple-400" />
-                    <span>환경 설정</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditMode(false);
-                      setEditingId(null);
-                      setNewNoteCategory('cs');
-                      setNewNoteData({
-                        title: '',
-                        platform: 'SWEA',
-                        difficulty: '',
-                        tags: '',
-                        code: '',
-                        summary: '',
-                        keyPoint: '',
-                        subCategory: '운영체제(OS)',
-                        certQuestion: '',
-                        certAnswer: ''
-                      });
-                      setIsModalOpen(true);
-                    }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>새 CS 토픽 추가</span>
-                  </button>
-                </div>
-              </div>
+              )}
 
-              <div className="space-y-6">
-                {csList.map((cs) => (
-                  <div key={cs.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                    <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                      <div>
-                        <span className={`rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 font-medium ${typo.badge}`}>
-                          {cs.domain}
-                        </span>
-                        <h3 className={`mt-1.5 ${typo.cardTitle}`}>{cs.title}</h3>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleOpenEdit('cs', cs)}
-                          title="수정하기"
-                          className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteItem('cs', cs.id)}
-                          title="삭제하기"
-                          className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+              {/* TAB 4: CS TOPICS */}
+              {activeTab === 'cs' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                        <Cpu className="w-6 h-6 text-blue-500" />
+                        컴퓨터 사이언스 & 기술 면접
+                      </h2>
+                      <p className={`text-xs mt-1 ${c.dimText}`}>운영체제, 네트워크, 데이터베이스 등 핵심 CS 이론과 면접 Q&A를 아카이빙합니다.</p>
                     </div>
-
-                    <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
-                      {cs.concept}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
+                      >
+                        <Settings className="w-3.5 h-3.5 text-purple-400" />
+                        <span>환경 설정</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditMode(false);
+                          setEditingId(null);
+                          setNewNoteCategory('cs');
+                          setNewNoteData({
+                            title: '',
+                            platform: 'SWEA',
+                            difficulty: '',
+                            tags: '',
+                            code: '',
+                            summary: '',
+                            keyPoint: '',
+                            subCategory: '운영체제(OS)',
+                            certQuestion: '',
+                            certAnswer: ''
+                          });
+                          setIsModalOpen(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>새 CS 토픽 추가</span>
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* TAB 5: LANGUAGE */}
-          {activeTab === 'language' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                    <Languages className="w-6 h-6 text-rose-500" />
-                    어학 및 테크 영어
-                  </h2>
-                  <p className={`text-xs mt-1 ${c.dimText}`}>실무 개발 영어 회화, 테크 인터뷰 및 기술 표현을 정리하고 음성으로 청취합니다.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
-                  >
-                    <Settings className="w-3.5 h-3.5 text-purple-400" />
-                    <span>환경 설정</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditMode(false);
-                      setEditingId(null);
-                      setNewNoteCategory('lang');
-                      setNewNoteData({
-                        title: '',
-                        platform: 'SWEA',
-                        difficulty: '',
-                        tags: '',
-                        code: '',
-                        summary: '',
-                        keyPoint: '',
-                        subCategory: 'Personal Log',
-                        certQuestion: '',
-                        certAnswer: ''
-                      });
-                      setIsModalOpen(true);
-                    }}
-                    className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>새 영어 표현 추가</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {langList.map((item) => (
-                  <div key={item.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                    <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                      <div>
-                        <span className={`rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 ${typo.badge}`}>
-                          {item.category}
-                        </span>
-                        <h3 className={`mt-1.5 ${typo.cardTitle}`}>{item.title}</h3>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleOpenEdit('lang', item)}
-                          title="수정하기"
-                          className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteItem('lang', item.id)}
-                          title="삭제하기"
-                          className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2.5">
-                      {item.dialogue?.map((line, dIdx) => (
-                        <div key={dIdx} className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${c.cardInnerBg} ${c.cardInnerBorder}`}>
+                  <div className="space-y-6">
+                    {csList.map((cs) => (
+                      <div key={cs.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                        <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                           <div>
-                            <p className={`font-medium ${typo.body}`}>{line.en}</p>
-                            <p className={`mt-1 ${c.dimText} ${typo.body}`}>{line.ko}</p>
+                            <span className={`rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 font-medium ${typo.badge}`}>
+                              {cs.domain}
+                            </span>
+                            <h3 className={`mt-1.5 ${typo.cardTitle}`}>{cs.title}</h3>
                           </div>
-                          <button onClick={() => speakText(line.en)} className={`p-2 hover:text-rose-500 rounded-lg transition shrink-0 border ${c.buttonSec}`}>
-                            <Volume2 className="w-4 h-4" />
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEdit('cs', cs)}
+                              title="수정하기"
+                              className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem('cs', cs.id)}
+                              title="삭제하기"
+                              className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
+                          {cs.concept}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: LANGUAGE */}
+              {activeTab === 'language' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                        <Languages className="w-6 h-6 text-rose-500" />
+                        어학 및 테크 영어
+                      </h2>
+                      <p className={`text-xs mt-1 ${c.dimText}`}>실무 개발 영어 회화, 테크 인터뷰 및 기술 표현을 정리하고 음성으로 청취합니다.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`px-3 py-2 border text-xs font-medium rounded-xl flex items-center gap-1.5 transition ${c.buttonSec}`}
+                      >
+                        <Settings className="w-3.5 h-3.5 text-purple-400" />
+                        <span>환경 설정</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditMode(false);
+                          setEditingId(null);
+                          setNewNoteCategory('lang');
+                          setNewNoteData({
+                            title: '',
+                            platform: 'SWEA',
+                            difficulty: '',
+                            tags: '',
+                            code: '',
+                            summary: '',
+                            keyPoint: '',
+                            subCategory: 'Personal Log',
+                            certQuestion: '',
+                            certAnswer: ''
+                          });
+                          setIsModalOpen(true);
+                        }}
+                        className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>새 영어 표현 추가</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    {langList.map((item) => (
+                      <div key={item.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                        <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                          <div>
+                            <span className={`rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 ${typo.badge}`}>
+                              {item.category}
+                            </span>
+                            <h3 className={`mt-1.5 ${typo.cardTitle}`}>{item.title}</h3>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEdit('lang', item)}
+                              title="수정하기"
+                              className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem('lang', item.id)}
+                              title="삭제하기"
+                              className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2.5">
+                          {item.dialogue?.map((line, dIdx) => (
+                            <div key={dIdx} className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${c.cardInnerBg} ${c.cardInnerBorder}`}>
+                              <div>
+                                <p className={`font-medium ${typo.body}`}>{line.en}</p>
+                                <p className={`mt-1 ${c.dimText} ${typo.body}`}>{line.ko}</p>
+                              </div>
+                              <button onClick={() => speakText(line.en)} className={`p-2 hover:text-rose-500 rounded-lg transition shrink-0 border ${c.buttonSec}`}>
+                                <Volume2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 6: SETTINGS */}
+              {activeTab === 'settings' && (
+                <div className="space-y-6 animate-fadeIn max-w-3xl">
+                  <div>
+                    <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                      <Settings className="w-6 h-6 text-purple-500" />
+                      환경 설정
+                    </h2>
+                    <p className={`text-xs mt-1 ${c.dimText}`}>
+                      다크/라이트 테마, 글자 크기, 알고리즘 플랫폼 세팅을 사용자 환경에 맞게 커스텀합니다.
+                    </p>
+                  </div>
+
+                  {/* THEME MODE PREFERENCE */}
+                  <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                    <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                      <div className="flex items-center gap-2">
+                        {isDark ? <Moon className="w-4 h-4 text-purple-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                        <h3 className="text-sm font-bold">화면 테마 모드</h3>
+                      </div>
+                      <span className={`text-xs font-mono ${c.dimText}`}>
+                        현재: {isDark ? '다크 모드 (Dark)' : '라이트 모드 (Light)'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleThemeChange('dark')}
+                        className={`py-3.5 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-2 ${
+                          isDark
+                            ? 'bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-600/20 font-bold'
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Moon className="w-4 h-4 text-purple-400" />
+                          <span className="text-xs font-semibold">다크 모드 (Dark)</span>
+                        </div>
+                        <span className={`text-[11px] ${c.dimText}`}>어두운 배경과 눈이 편안한 대비</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleThemeChange('light')}
+                        className={`py-3.5 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-2 ${
+                          !isDark
+                            ? 'bg-amber-500/20 border-amber-500 text-amber-900 shadow-lg shadow-amber-500/20 font-bold'
+                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sun className="w-4 h-4 text-amber-500" />
+                          <span className="text-xs font-semibold">라이트 모드 (Light)</span>
+                        </div>
+                        <span className={`text-[11px] ${c.dimText}`}>밝고 깔끔한 화이트/슬레이트 배경</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* FONT SIZE PREFERENCE */}
+                  <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                    <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                      <div className="flex items-center gap-2">
+                        <Type className="w-4 h-4 text-purple-500" />
+                        <h3 className="text-sm font-bold">화면 글자 크기 (텍스트 스케일)</h3>
+                      </div>
+                      <span className={`text-xs font-mono ${c.dimText}`}>
+                        현재: {fontSizeLevel === 'normal' ? '보통 (100%)' : fontSizeLevel === 'large' ? '크게 (115%)' : '아주 크게 (130%)'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleFontSizeChange('normal')}
+                        className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                          fontSizeLevel === 'normal'
+                            ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-600/20 font-bold'
+                            : `${c.cardInnerBg} ${c.cardInnerBorder} ${c.subText}`
+                        }`}
+                      >
+                        <span className="text-xs font-semibold">보통 (Normal)</span>
+                        <span className={`text-[11px] ${c.dimText}`}>기본 크기 (100%)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleFontSizeChange('large')}
+                        className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                          fontSizeLevel === 'large'
+                            ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-600/20 font-bold'
+                            : `${c.cardInnerBg} ${c.cardInnerBorder} ${c.subText}`
+                        }`}
+                      >
+                        <span className="text-sm font-semibold">크게 (Large)</span>
+                        <span className={`text-[11px] ${c.dimText}`}>가독성 향상 (115%)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleFontSizeChange('xlarge')}
+                        className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                          fontSizeLevel === 'xlarge'
+                            ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-600/20 font-bold'
+                            : `${c.cardInnerBg} ${c.cardInnerBorder} ${c.subText}`
+                        }`}
+                      >
+                        <span className="text-base font-semibold">아주 크게 (XL)</span>
+                        <span className={`text-[11px] ${c.dimText}`}>시원한 글씨 (130%)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* PLATFORM SETTINGS */}
+                  <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                    <h3 className="text-sm font-bold">새 플랫폼 추가</h3>
+                    <form onSubmit={handleAddPlatform} className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="예: CodeTree, LeetCode, AtCoder, HackerRank..."
+                        value={newPlatformInput}
+                        onChange={(e) => setNewPlatformInput(e.target.value)}
+                        className={`flex-1 rounded-xl px-4 py-2 text-xs placeholder-slate-400 focus:outline-none border ${c.inputBg}`}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isSyncing}
+                        className="px-5 py-2 bg-purple-600 hover:bg-purple-500 font-semibold text-white text-xs rounded-xl transition shadow flex items-center gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>추가</span>
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                    <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                      <h3 className="text-sm font-bold">사용 중인 플랫폼 목록 ({platforms.length}개)</h3>
+                      <span className={`text-xs ${c.dimText}`}>x 버튼을 누르면 목록에서 삭제됩니다.</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5 pt-1">
+                      {platforms.map((p) => (
+                        <div
+                          key={p}
+                          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-medium transition ${c.cardInnerBg} ${c.cardInnerBorder}`}
+                        >
+                          <span className="font-mono text-purple-400 font-semibold">{p}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePlatform(p)}
+                            title={`${p} 삭제`}
+                            className={`hover:text-rose-500 p-0.5 rounded transition ${c.dimText}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: SETTINGS */}
-          {activeTab === 'settings' && (
-            <div className="space-y-6 animate-fadeIn max-w-3xl">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                  <Settings className="w-6 h-6 text-purple-500" />
-                  환경 설정
-                </h2>
-                <p className={`text-xs mt-1 ${c.dimText}`}>
-                  다크/라이트 테마, 글자 크기, 알고리즘 플랫폼 세팅을 사용자 환경에 맞게 커스텀합니다.
-                </p>
-              </div>
-
-              {/* THEME MODE PREFERENCE */}
-              <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                  <div className="flex items-center gap-2">
-                    {isDark ? <Moon className="w-4 h-4 text-purple-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                    <h3 className="text-sm font-bold">화면 테마 모드</h3>
-                  </div>
-                  <span className={`text-xs font-mono ${c.dimText}`}>
-                    현재: {isDark ? '다크 모드 (Dark)' : '라이트 모드 (Light)'}
-                  </span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleThemeChange('dark')}
-                    className={`py-3.5 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-2 ${
-                      isDark
-                        ? 'bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-600/20 font-bold'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Moon className="w-4 h-4 text-purple-400" />
-                      <span className="text-xs font-semibold">다크 모드 (Dark)</span>
-                    </div>
-                    <span className={`text-[11px] ${c.dimText}`}>어두운 배경과 눈이 편안한 대비</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleThemeChange('light')}
-                    className={`py-3.5 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-2 ${
-                      !isDark
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-900 shadow-lg shadow-amber-500/20 font-bold'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sun className="w-4 h-4 text-amber-500" />
-                      <span className="text-xs font-semibold">라이트 모드 (Light)</span>
-                    </div>
-                    <span className={`text-[11px] ${c.dimText}`}>밝고 깔끔한 화이트/슬레이트 배경</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* FONT SIZE PREFERENCE */}
-              <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                  <div className="flex items-center gap-2">
-                    <Type className="w-4 h-4 text-purple-500" />
-                    <h3 className="text-sm font-bold">화면 글자 크기 (텍스트 스케일)</h3>
-                  </div>
-                  <span className={`text-xs font-mono ${c.dimText}`}>
-                    현재: {fontSizeLevel === 'normal' ? '보통 (100%)' : fontSizeLevel === 'large' ? '크게 (115%)' : '아주 크게 (130%)'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleFontSizeChange('normal')}
-                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
-                      fontSizeLevel === 'normal'
-                        ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-600/20 font-bold'
-                        : `${c.cardInnerBg} ${c.cardInnerBorder} ${c.subText}`
-                    }`}
-                  >
-                    <span className="text-xs font-semibold">보통 (Normal)</span>
-                    <span className={`text-[11px] ${c.dimText}`}>기본 크기 (100%)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleFontSizeChange('large')}
-                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
-                      fontSizeLevel === 'large'
-                        ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-600/20 font-bold'
-                        : `${c.cardInnerBg} ${c.cardInnerBorder} ${c.subText}`
-                    }`}
-                  >
-                    <span className="text-sm font-semibold">크게 (Large)</span>
-                    <span className={`text-[11px] ${c.dimText}`}>가독성 향상 (115%)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleFontSizeChange('xlarge')}
-                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
-                      fontSizeLevel === 'xlarge'
-                        ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-600/20 font-bold'
-                        : `${c.cardInnerBg} ${c.cardInnerBorder} ${c.subText}`
-                    }`}
-                  >
-                    <span className="text-base font-semibold">아주 크게 (XL)</span>
-                    <span className={`text-[11px] ${c.dimText}`}>시원한 글씨 (130%)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* PLATFORM SETTINGS */}
-              <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                <h3 className="text-sm font-bold">새 플랫폼 추가</h3>
-                <form onSubmit={handleAddPlatform} className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    placeholder="예: CodeTree, LeetCode, AtCoder, HackerRank..."
-                    value={newPlatformInput}
-                    onChange={(e) => setNewPlatformInput(e.target.value)}
-                    className={`flex-1 rounded-xl px-4 py-2 text-xs placeholder-slate-400 focus:outline-none border ${c.inputBg}`}
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSyncing}
-                    className="px-5 py-2 bg-purple-600 hover:bg-purple-500 font-semibold text-white text-xs rounded-xl transition shadow flex items-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>추가</span>
-                  </button>
-                </form>
-              </div>
-
-              <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                  <h3 className="text-sm font-bold">사용 중인 플랫폼 목록 ({platforms.length}개)</h3>
-                  <span className={`text-xs ${c.dimText}`}>x 버튼을 누르면 목록에서 삭제됩니다.</span>
-                </div>
-
-                <div className="flex flex-wrap gap-2.5 pt-1">
-                  {platforms.map((p) => (
-                    <div
-                      key={p}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-medium transition ${c.cardInnerBg} ${c.cardInnerBorder}`}
-                    >
-                      <span className="font-mono text-purple-400 font-semibold">{p}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePlatform(p)}
-                        title={`${p} 삭제`}
-                        className={`hover:text-rose-500 p-0.5 rounded transition ${c.dimText}`}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+              )}
+            </>
           )}
         </div>
       </main>
