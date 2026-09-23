@@ -55,5 +55,18 @@
     "Programmers",
     "CodeTree"
   ],
-  "events": []
+  "events": [
+    {
+      "id": "evt-1790132290855",
+      "date": "2026-09-28",
+      "title": "SSAFY 주간평가",
+      "category": "시험/코테"
+    },
+    {
+      "id": "evt-1790132295030",
+      "date": "2026-09-28",
+      "title": "SSAFY 월말평가",
+      "category": "시험/코테"
+    }
+  ]
 }
