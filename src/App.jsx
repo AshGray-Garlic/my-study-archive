@@ -36,6 +36,71 @@ const FILE_PATH = 'public/data/db.json';
 
 const DEFAULT_PLATFORMS = ['SWEA', 'Programmers', 'LeetCode', 'CodeTree'];
 
+// 대한민국 법정 공휴일 및 주요 대체공휴일 맵 (YYYY-MM-DD)
+const HOLIDAYS = {
+  // 2025년
+  '2025-01-01': '신정',
+  '2025-01-28': '설날연휴',
+  '2025-01-29': '설날',
+  '2025-01-30': '설날연휴',
+  '2025-03-01': '삼일절',
+  '2025-03-03': '대체공휴일',
+  '2025-05-05': '어린이날',
+  '2025-05-06': '대체공휴일(부처님오신날)',
+  '2025-06-06': '현충일',
+  '2025-08-15': '광복절',
+  '2025-10-03': '개천절',
+  '2025-10-05': '추석연휴',
+  '2025-10-06': '추석',
+  '2025-10-07': '추석연휴',
+  '2025-10-08': '대체공휴일',
+  '2025-10-09': '한글날',
+  '2025-12-25': '성탄절',
+
+  // 2026년
+  '2026-01-01': '신정',
+  '2026-02-16': '설날연휴',
+  '2026-02-17': '설날',
+  '2026-02-18': '설날연휴',
+  '2026-03-01': '삼일절',
+  '2026-03-02': '대체공휴일',
+  '2026-05-05': '어린이날',
+  '2026-05-24': '부처님오신날',
+  '2026-05-25': '대체공휴일',
+  '2026-06-06': '현충일',
+  '2026-08-15': '광복절',
+  '2026-08-17': '대체공휴일',
+  '2026-09-24': '추석연휴',
+  '2026-09-25': '추석',
+  '2026-09-26': '추석연휴',
+  '2026-10-03': '개천절',
+  '2026-10-05': '대체공휴일',
+  '2026-10-09': '한글날',
+  '2026-12-25': '성탄절',
+
+  // 2027년
+  '2027-01-01': '신정',
+  '2027-02-06': '설날연휴',
+  '2027-02-07': '설날',
+  '2027-02-08': '설날연휴',
+  '2027-02-09': '대체공휴일',
+  '2027-03-01': '삼일절',
+  '2027-05-05': '어린이날',
+  '2027-05-13': '부처님오신날',
+  '2027-06-06': '현충일',
+  '2027-06-07': '대체공휴일',
+  '2027-08-15': '광복절',
+  '2027-08-16': '대체공휴일',
+  '2027-09-14': '추석연휴',
+  '2027-09-15': '추석',
+  '2027-09-16': '추석연휴',
+  '2027-10-03': '개천절',
+  '2027-10-04': '대체공휴일',
+  '2027-10-09': '한글날',
+  '2027-10-11': '대체공휴일',
+  '2027-12-25': '성탄절'
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +120,7 @@ export default function App() {
   const [certNotes, setCertNotes] = useState([]);
   const [csList, setCsList] = useState([]);
   const [langList, setLangList] = useState([]);
-  const [eventsList, setEventsList] = useState([]); // 캘린더 일정 목록
+  const [eventsList, setEventsList] = useState([]);
 
   // Custom Platform Settings State
   const [platforms, setPlatforms] = useState(DEFAULT_PLATFORMS);
@@ -646,10 +711,12 @@ export default function App() {
     });
   }, [algoList, searchQuery, selectedTag]);
 
-  // Calendar selected date events
+  // Calendar selected date events & holiday info
   const selectedDateEvents = useMemo(() => {
     return eventsList.filter((evt) => evt.date === selectedDateStr);
   }, [eventsList, selectedDateStr]);
+
+  const selectedDateHoliday = HOLIDAYS[selectedDateStr] || null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col md:flex-row">
@@ -912,7 +979,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* STUDY CALENDAR SECTION */}
+                  {/* STUDY CALENDAR SECTION (공휴일 & 요일별 색상 적용) */}
                   <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-7 space-y-6 shadow-xl">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
                       <div className="flex items-center gap-3">
@@ -921,7 +988,7 @@ export default function App() {
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white">학습 & 시험 캘린더</h3>
-                          <p className="text-xs text-slate-400">코딩테스트, 자격증 시험일, 스터디 일정을 기록하고 관리합니다.</p>
+                          <p className="text-xs text-slate-400">코딩테스트, 자격증 시험일, 스터디 및 공휴일 일정을 관리합니다.</p>
                         </div>
                       </div>
 
@@ -974,6 +1041,12 @@ export default function App() {
                               today.getMonth() === month &&
                               today.getDate() === dateNum;
 
+                            // Day of week: 0 = Sunday, 6 = Saturday
+                            const dayOfWeek = new Date(year, month, dateNum).getDay();
+                            const holidayName = HOLIDAYS[dateStr] || null;
+                            const isHolidayOrSunday = dayOfWeek === 0 || Boolean(holidayName);
+                            const isSaturday = dayOfWeek === 6 && !holidayName;
+
                             const dayEvents = eventsList.filter((e) => e.date === dateStr);
 
                             return (
@@ -982,15 +1055,34 @@ export default function App() {
                                 onClick={() => setSelectedDateStr(dateStr)}
                                 className={`h-14 sm:h-16 p-1.5 rounded-xl border flex flex-col justify-between items-start transition-all relative group ${
                                   isSelected
-                                    ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+                                    ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-600/20'
                                     : isToday
-                                    ? 'bg-slate-800/80 border-indigo-400/50 text-indigo-300'
-                                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 text-slate-300'
+                                    ? 'bg-slate-800/80 border-indigo-400/50'
+                                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
                                 }`}
                               >
-                                <span className={`text-xs font-mono font-bold ${isToday ? 'text-indigo-400 underline underline-offset-2' : ''}`}>
-                                  {dateNum}
-                                </span>
+                                <div className="w-full flex items-center justify-between">
+                                  <span
+                                    className={`text-xs font-mono font-bold ${
+                                      isHolidayOrSunday
+                                        ? 'text-rose-400'
+                                        : isSaturday
+                                        ? 'text-blue-400'
+                                        : isToday
+                                        ? 'text-indigo-400 underline underline-offset-2'
+                                        : 'text-slate-200'
+                                    }`}
+                                  >
+                                    {dateNum}
+                                  </span>
+
+                                  {/* 공휴일 배지 */}
+                                  {holidayName && (
+                                    <span className="text-[9px] px-1 py-0.2 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans truncate max-w-[42px] sm:max-w-[50px]">
+                                      {holidayName}
+                                    </span>
+                                  )}
+                                </div>
 
                                 {dayEvents.length > 0 && (
                                   <div className="w-full flex items-center justify-between">
@@ -1014,11 +1106,18 @@ export default function App() {
                       <div className="lg:col-span-5 flex flex-col justify-between bg-slate-950/60 border border-slate-800/80 rounded-2xl p-5 space-y-4">
                         <div>
                           <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                            <span className="text-xs font-mono text-indigo-400 font-bold flex items-center gap-1.5">
-                              <Clock className="w-3.5 h-3.5" />
-                              {selectedDateStr} 일정 ({selectedDateEvents.length})
-                            </span>
-                            <span className="text-[11px] text-slate-500">클릭한 날짜에 일정 추가</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono text-indigo-400 font-bold flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                {selectedDateStr}
+                              </span>
+                              {selectedDateHoliday && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold">
+                                  {selectedDateHoliday}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-500">일정 ({selectedDateEvents.length}건)</span>
                           </div>
 
                           <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
