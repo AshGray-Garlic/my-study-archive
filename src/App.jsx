@@ -618,33 +618,60 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+                    {/* 알고리즘 블록 */}
+                    <div
+                      onClick={() => { setActiveTab('algo'); setSearchQuery(''); }}
+                      className="bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group select-none"
+                    >
                       <div className="flex items-center justify-between text-slate-400 mb-2">
-                        <span className="text-xs font-medium">해결한 알고리즘</span>
-                        <Code2 className="w-4 h-4 text-emerald-400" />
+                        <span className="text-xs font-medium group-hover:text-emerald-400 transition-colors">해결한 알고리즘</span>
+                        <Code2 className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
                       </div>
-                      <div className="text-2xl font-bold text-white font-mono">{algoList.length} <span className="text-xs text-slate-400 font-sans font-normal">문제</span></div>
+                      <div className="text-2xl font-bold text-white font-mono">
+                        {algoList.length} <span className="text-xs text-slate-400 font-sans font-normal">문제</span>
+                      </div>
                     </div>
-                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+
+                    {/* 자격증 블록 */}
+                    <div
+                      onClick={() => { setActiveTab('cert'); setSearchQuery(''); }}
+                      className="bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/10 group select-none"
+                    >
                       <div className="flex items-center justify-between text-slate-400 mb-2">
-                        <span className="text-xs font-medium">자격증 노트</span>
-                        <Award className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs font-medium group-hover:text-amber-400 transition-colors">자격증 노트</span>
+                        <Award className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
                       </div>
-                      <div className="text-2xl font-bold text-white font-mono">{certNotes.length} <span className="text-xs text-slate-400 font-sans font-normal">개</span></div>
+                      <div className="text-2xl font-bold text-white font-mono">
+                        {certNotes.length} <span className="text-xs text-slate-400 font-sans font-normal">개</span>
+                      </div>
                     </div>
-                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+
+                    {/* CS 블록 */}
+                    <div
+                      onClick={() => { setActiveTab('cs'); setSearchQuery(''); }}
+                      className="bg-slate-900/80 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/10 group select-none"
+                    >
                       <div className="flex items-center justify-between text-slate-400 mb-2">
-                        <span className="text-xs font-medium">컴퓨터 구조 & CS</span>
-                        <Cpu className="w-4 h-4 text-blue-400" />
+                        <span className="text-xs font-medium group-hover:text-blue-400 transition-colors">컴퓨터 구조 & CS</span>
+                        <Cpu className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
                       </div>
-                      <div className="text-2xl font-bold text-white font-mono">{csList.length} <span className="text-xs text-slate-400 font-sans font-normal">주제</span></div>
+                      <div className="text-2xl font-bold text-white font-mono">
+                        {csList.length} <span className="text-xs text-slate-400 font-sans font-normal">주제</span>
+                      </div>
                     </div>
-                    <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+
+                    {/* 어학 블록 */}
+                    <div
+                      onClick={() => { setActiveTab('language'); setSearchQuery(''); }}
+                      className="bg-slate-900/80 border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-rose-500/10 group select-none"
+                    >
                       <div className="flex items-center justify-between text-slate-400 mb-2">
-                        <span className="text-xs font-medium">어학 템플릿</span>
-                        <Languages className="w-4 h-4 text-rose-400" />
+                        <span className="text-xs font-medium group-hover:text-rose-400 transition-colors">어학 템플릿</span>
+                        <Languages className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
                       </div>
-                      <div className="text-2xl font-bold text-white font-mono">{langList.length} <span className="text-xs text-slate-400 font-sans font-normal">세트</span></div>
+                      <div className="text-2xl font-bold text-white font-mono">
+                        {langList.length} <span className="text-xs text-slate-400 font-sans font-normal">세트</span>
+                      </div>
                     </div>
                   </div>
                 </>
