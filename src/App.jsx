@@ -238,7 +238,7 @@ export default function App() {
     code: '',
     summary: '',
     keyPoint: '',
-    subCategory: '정보처리기사',
+    subCategory: '태그 입력',
     certQuestion: '',
     certAnswer: ''
   });
@@ -392,7 +392,7 @@ export default function App() {
       code: '',
       summary: '',
       keyPoint: '',
-      subCategory: '정보처리기사',
+      subCategory: '태그 입력',
       certQuestion: '',
       certAnswer: ''
     });
@@ -1341,7 +1341,7 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="예: 정보처리기사, SQLD, 리눅스마스터 등"
+                    placeholder="ex) 정보처리기사, SQLD, 리눅스마스터 등"
                     value={newNoteData.subCategory}
                     onChange={(e) => setNewNoteData({ ...newNoteData, subCategory: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200"
@@ -1406,7 +1406,7 @@ export default function App() {
                 <label className="block text-slate-300 font-semibold mb-1">태그 (쉼표 구분)</label>
                 <input
                   type="text"
-                  placeholder="BFS, DP, 구현"
+                  placeholder="태그 입력"
                   value={newNoteData.tags}
                   onChange={(e) => setNewNoteData({ ...newNoteData, tags: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200"
