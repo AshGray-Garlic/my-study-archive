@@ -177,7 +177,10 @@ export default function App() {
         subText: 'text-slate-400',
         dimText: 'text-slate-500',
         buttonSec: 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300',
-        codeContainer: 'bg-slate-950 border-slate-800',
+        codeContainer: 'bg-slate-950 border-slate-800 text-slate-300',
+        codeHeader: 'bg-slate-900/90 border-slate-800 text-slate-400',
+        codeExpandedBg: 'bg-slate-950 text-slate-200',
+        codeExpandedHeader: 'bg-slate-900 border-slate-800',
         modalOverlay: 'bg-black/80',
         modalBg: 'bg-slate-900 border-slate-800 text-slate-100'
       };
@@ -195,7 +198,10 @@ export default function App() {
       subText: 'text-slate-600',
       dimText: 'text-slate-400',
       buttonSec: 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700 shadow-sm',
-      codeContainer: 'bg-slate-900 border-slate-800 text-slate-100',
+      codeContainer: 'bg-slate-100/90 border-slate-200 text-slate-800 shadow-inner',
+      codeHeader: 'bg-slate-200/80 border-slate-300 text-slate-700',
+      codeExpandedBg: 'bg-slate-50 text-slate-800',
+      codeExpandedHeader: 'bg-white border-slate-200 shadow-sm',
       modalOverlay: 'bg-slate-900/60',
       modalBg: 'bg-white border-slate-200 text-slate-800 shadow-2xl'
     };
@@ -962,25 +968,25 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen relative">
-        {/* EXPANDED CODE VIEWER OVERLAY */}
+        {/* EXPANDED CODE VIEWER OVERLAY (다크 / 라이트 테마 완벽 연동) */}
         {expandedCodeData && (
-          <div className={`absolute inset-0 z-40 flex flex-col animate-fadeIn ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-900 text-slate-100'}`}>
-            <div className="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0 shadow-md">
+          <div className={`absolute inset-0 z-40 flex flex-col animate-fadeIn ${c.codeExpandedBg}`}>
+            <div className={`px-6 py-4 border-b flex items-center justify-between shrink-0 shadow-md ${c.codeExpandedHeader}`}>
               <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shrink-0">
+                <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl border border-emerald-500/20 shrink-0">
                   <Code2 className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                       {expandedCodeData.platform} #{expandedCodeData.problemNumber}
                     </span>
-                    <h2 className="text-base sm:text-lg font-bold text-white truncate">{expandedCodeData.title}</h2>
-                    <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                    <h2 className="text-base sm:text-lg font-bold truncate">{expandedCodeData.title}</h2>
+                    <span className={`text-xs px-2 py-0.5 rounded border ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-300'}`}>
                       {expandedCodeData.difficulty}
                     </span>
                   </div>
-                  <span className="text-xs font-mono uppercase text-emerald-400 mt-0.5 block">
+                  <span className="text-xs font-mono uppercase text-emerald-500 mt-0.5 block">
                     Language: {expandedCodeData.codeLanguage || 'java'}
                   </span>
                 </div>
@@ -989,14 +995,14 @@ export default function App() {
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => handleCopy('expanded', expandedCodeData.code)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-xl transition"
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl transition border ${c.buttonSec}`}
                 >
-                  {copiedId === 'expanded' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedId === 'expanded' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedId === 'expanded' ? '복사됨!' : '전체 코드 복사'}</span>
                 </button>
                 <button
                   onClick={() => setExpandedCodeData(null)}
-                  className="p-2 bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 rounded-xl transition"
+                  className={`p-2 hover:text-rose-500 rounded-xl transition border ${c.buttonSec}`}
                   title="전체화면 닫기"
                 >
                   <X className="w-5 h-5" />
@@ -1004,8 +1010,8 @@ export default function App() {
               </div>
             </div>
 
-            <div className={`flex-1 overflow-auto p-6 md:p-8 font-mono text-slate-200 leading-relaxed scrollbar-thin ${typo.codeExpanded}`}>
-              <pre className="selection:bg-indigo-500/30">
+            <div className={`flex-1 overflow-auto p-6 md:p-8 font-mono leading-relaxed scrollbar-thin ${typo.codeExpanded} ${isDark ? 'selection:bg-indigo-500/30' : 'selection:bg-indigo-200'}`}>
+              <pre>
                 <code>{expandedCodeData.code}</code>
               </pre>
             </div>
@@ -1445,7 +1451,7 @@ export default function App() {
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-semibold text-blue-500 flex items-center gap-1.5">
                         <Cpu className="w-4 h-4" />
-                        컴퓨터 구조 & CS ({csList.filter((c) => c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.concept.toLowerCase().includes(searchQuery.toLowerCase())).length})
+                        컴퓨터 구조 & CS ({csList.filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.concept.toLowerCase().includes(searchQuery.toLowerCase())).length})
                       </h4>
                       <button
                         onClick={() => setActiveTab('cs')}
@@ -1586,27 +1592,27 @@ export default function App() {
                           {algo.summary}
                         </div>
 
-                        {/* Code Container */}
+                        {/* Code Container (라이트 / 다크 테마 완전 연동) */}
                         {algo.code && (
                           <div className={`relative rounded-xl overflow-hidden border group ${c.codeContainer}`}>
-                            <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-slate-800 text-xs text-slate-400">
-                              <span className="font-mono uppercase text-emerald-400 font-semibold">{algo.codeLanguage || 'code'}</span>
+                            <div className={`flex items-center justify-between px-4 py-2 border-b text-xs ${c.codeHeader}`}>
+                              <span className="font-mono uppercase text-emerald-500 font-semibold">{algo.codeLanguage || 'code'}</span>
                               <div className="flex items-center gap-2">
                                 <button
                                   type="button"
                                   onClick={() => setExpandedCodeData(algo)}
-                                  className="flex items-center gap-1 text-[11px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md transition"
+                                  className={`flex items-center gap-1 text-[11px] px-2 py-1 rounded-md transition border ${c.buttonSec}`}
                                   title="전체화면으로 보기"
                                 >
-                                  <Maximize2 className="w-3 h-3 text-emerald-400" />
+                                  <Maximize2 className="w-3 h-3 text-emerald-500" />
                                   <span>크게 보기</span>
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleCopy(algo.id, algo.code)}
-                                  className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md transition"
+                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition border ${c.buttonSec}`}
                                 >
-                                  {copiedId === algo.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                  {copiedId === algo.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                                   <span>{copiedId === algo.id ? '복사됨!' : '코드 복사'}</span>
                                 </button>
                               </div>
@@ -1617,12 +1623,12 @@ export default function App() {
                               className="cursor-pointer relative"
                               title="클릭하면 좌측 바 제외 전체화면으로 코드가 확대됩니다."
                             >
-                              <pre className={`p-4 font-mono text-slate-300 overflow-x-auto max-h-64 scrollbar-thin ${typo.codePre}`}>
+                              <pre className={`p-4 font-mono overflow-x-auto max-h-64 scrollbar-thin ${typo.codePre}`}>
                                 <code>{algo.code}</code>
                               </pre>
                               <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors flex items-center justify-center pointer-events-none">
-                                <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/90 border border-slate-700 text-slate-200 text-xs px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                                  <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-xs px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 border ${c.buttonSec}`}>
+                                  <Maximize2 className="w-3.5 h-3.5 text-emerald-500" />
                                   <span>클릭하여 전체화면으로 보기</span>
                                 </span>
                               </div>
