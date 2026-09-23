@@ -156,6 +156,14 @@ export default function App() {
     localStorage.setItem('app_font_size', level);
   };
 
+  // Code Viewer (Expanded Modal) State
+  const [expandedCodeData, setExpandedCodeData] = useState(null);
+
+  // 탭이 바뀔 때 열려 있는 코드 전체화면 자동 닫기
+  useEffect(() => {
+    setExpandedCodeData(null);
+  }, [activeTab]);
+
   // Dynamic Typography Styles
   const typo = useMemo(() => {
     if (fontSizeLevel === 'xlarge') {
@@ -267,9 +275,6 @@ export default function App() {
   // Edit Mode States
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
-
-  // Code Viewer (Expanded Modal) State
-  const [expandedCodeData, setExpandedCodeData] = useState(null);
 
   // Load Data from GitHub API
   const loadDataFromGithub = async (token = githubToken) => {
@@ -851,6 +856,22 @@ export default function App() {
 
   return (
     <div className={`min-h-screen font-sans flex flex-col md:flex-row transition-colors duration-200 ${c.appBg} ${typo.body}`}>
+      {/* 라이트 모드 고대비 코드 문법 색상 인라인 스타일 */}
+      <style>{`
+        ${!isDark ? `
+          /* 라이트 모드 전용 고대비 토큰 색상 보정 */
+          .token.comment, .token.prolog, .token.doctype, .token.cdata { color: #64748b !important; font-style: italic; }
+          .token.punctuation { color: #475569 !important; }
+          .token.property, .token.tag, .token.boolean, .token.constant, .token.symbol { color: #dc2626 !important; font-weight: 600; }
+          .token.number { color: #c2410c !important; font-weight: 600; }
+          .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin { color: #15803d !important; font-weight: 500; }
+          .token.operator, .token.entity, .token.url { color: #0284c7 !important; }
+          .token.atrule, .token.attr-value, .token.keyword { color: #7c3aed !important; font-weight: 700; }
+          .token.function { color: #0e7490 !important; font-weight: 600; }
+          .token.class-name { color: #1d4ed8 !important; font-weight: 700; }
+        ` : ''}
+      `}</style>
+
       {/* Sidebar */}
       <aside className={`w-full md:w-64 border-r p-5 flex flex-col justify-between shrink-0 transition-colors duration-200 ${c.sidebarBg}`}>
         <div>
@@ -996,7 +1017,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen relative">
-        {/* EXPANDED CODE VIEWER OVERLAY */}
+        {/* EXPANDED CODE VIEWER OVERLAY (라이트/다크 테마 및 고대비 완벽 연동) */}
         {expandedCodeData && (
           <div className={`absolute inset-0 z-40 flex flex-col animate-fadeIn ${c.codeExpandedBg}`}>
             <div className={`px-6 py-4 border-b flex items-center justify-between shrink-0 shadow-md ${c.codeExpandedHeader}`}>
@@ -1622,7 +1643,7 @@ export default function App() {
                           {algo.summary}
                         </div>
 
-                        {/* Code Container (문법 하이라이팅 적용) */}
+                        {/* Code Container */}
                         {algo.code && (
                           <div className={`relative rounded-xl overflow-hidden border group ${c.codeContainer}`}>
                             <div className={`flex items-center justify-between px-4 py-2 border-b text-xs ${c.codeHeader}`}>
@@ -1980,7 +2001,7 @@ export default function App() {
                 </p>
               </div>
 
-              {/* THEME MODE PREFERENCE (DARK / LIGHT) */}
+              {/* THEME MODE PREFERENCE */}
               <div className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
                 <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                   <div className="flex items-center gap-2">
