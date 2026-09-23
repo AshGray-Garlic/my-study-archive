@@ -558,15 +558,15 @@ export default function App() {
         updatedAlgo = updatedAlgo.map((item) =>
           item.id === editingId
             ? {
-                ...item,
-                title: newNoteData.title,
-                platform: chosenPlatform,
-                difficulty: newNoteData.difficulty,
-                tags: tagArray.length > 0 ? tagArray : ['구현'],
-                summary: newNoteData.summary,
-                keyPoint: newNoteData.keyPoint,
-                code: newNoteData.code
-              }
+              ...item,
+              title: newNoteData.title,
+              platform: chosenPlatform,
+              difficulty: newNoteData.difficulty,
+              tags: tagArray.length > 0 ? tagArray : ['구현'],
+              summary: newNoteData.summary,
+              keyPoint: newNoteData.keyPoint,
+              code: newNoteData.code
+            }
             : item
         );
       } else {
@@ -595,15 +595,15 @@ export default function App() {
         updatedCertNotes = updatedCertNotes.map((item) =>
           item.id === editingId
             ? {
-                ...item,
-                certName: newNoteData.subCategory || '자격증',
-                title: newNoteData.title,
-                tags: tagArray.length > 0 ? tagArray : ['핵심암기'],
-                summary: newNoteData.summary,
-                keyPoint: newNoteData.keyPoint,
-                question: newNoteData.certQuestion,
-                answer: newNoteData.certAnswer
-              }
+              ...item,
+              certName: newNoteData.subCategory || '자격증',
+              title: newNoteData.title,
+              tags: tagArray.length > 0 ? tagArray : ['핵심암기'],
+              summary: newNoteData.summary,
+              keyPoint: newNoteData.keyPoint,
+              question: newNoteData.certQuestion,
+              answer: newNoteData.certAnswer
+            }
             : item
         );
       } else {
@@ -626,17 +626,17 @@ export default function App() {
         updatedCs = updatedCs.map((item) =>
           item.id === editingId
             ? {
-                ...item,
-                domain: newNoteData.subCategory || 'CS',
-                title: newNoteData.title,
-                concept: newNoteData.summary,
-                interviewQA: [
-                  {
-                    q: newNoteData.certQuestion || `${newNoteData.title}의 핵심 원리는 무엇인가요?`,
-                    a: newNoteData.keyPoint || '상세 내용'
-                  }
-                ]
-              }
+              ...item,
+              domain: newNoteData.subCategory || 'CS',
+              title: newNoteData.title,
+              concept: newNoteData.summary,
+              interviewQA: [
+                {
+                  q: newNoteData.certQuestion || `${newNoteData.title}의 핵심 원리는 무엇인가요?`,
+                  a: newNoteData.keyPoint || '상세 내용'
+                }
+              ]
+            }
             : item
         );
       } else {
@@ -662,18 +662,18 @@ export default function App() {
         updatedLang = updatedLang.map((item) =>
           item.id === editingId
             ? {
-                ...item,
-                category: newNoteData.subCategory || 'Personal Log',
-                title: newNoteData.title,
-                situation: newNoteData.summary,
-                dialogue: [
-                  {
-                    speaker: 'User',
-                    en: newNoteData.keyPoint || 'I would like to express this clearly.',
-                    ko: newNoteData.certAnswer || '이 표현을 명확히 전달하고 싶습니다.'
-                  }
-                ]
-              }
+              ...item,
+              category: newNoteData.subCategory || 'Personal Log',
+              title: newNoteData.title,
+              situation: newNoteData.summary,
+              dialogue: [
+                {
+                  speaker: 'User',
+                  en: newNoteData.keyPoint || 'I would like to express this clearly.',
+                  ko: newNoteData.certAnswer || '이 표현을 명확히 전달하고 싶습니다.'
+                }
+              ]
+            }
             : item
         );
       } else {
@@ -811,9 +811,8 @@ export default function App() {
           <nav className="space-y-1.5">
             <button
               onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <LayoutDashboard className="w-4 h-4" />
@@ -823,9 +822,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('algo'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Code2 className="w-4 h-4 text-emerald-400" />
@@ -838,9 +836,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('cert'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Award className="w-4 h-4 text-amber-400" />
@@ -853,9 +850,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('cs'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Cpu className="w-4 h-4 text-blue-400" />
@@ -868,9 +864,8 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('language'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'language' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'language' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Languages className="w-4 h-4 text-rose-400" />
@@ -883,17 +878,11 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('settings'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'settings' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'settings' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
             >
-              <div className="flex items-center gap-3">
-                <Settings className="w-4 h-4 text-purple-400" />
-                <span>환경 설정</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">
-                {platforms.length}
-              </span>
+              <Settings className="w-4 h-4 text-purple-400" />
+              <span>환경 설정</span>
             </button>
           </nav>
         </div>
@@ -1148,25 +1137,23 @@ export default function App() {
                               <button
                                 key={dateStr}
                                 onClick={() => setSelectedDateStr(dateStr)}
-                                className={`h-14 sm:h-16 p-1.5 rounded-xl border flex flex-col justify-between items-start transition-all relative group ${
-                                  isSelected
+                                className={`h-14 sm:h-16 p-1.5 rounded-xl border flex flex-col justify-between items-start transition-all relative group ${isSelected
                                     ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-600/20'
                                     : isToday
-                                    ? 'bg-slate-800/80 border-indigo-400/50'
-                                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
-                                }`}
+                                      ? 'bg-slate-800/80 border-indigo-400/50'
+                                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                                  }`}
                               >
                                 <div className="w-full flex items-center justify-between">
                                   <span
-                                    className={`text-xs font-mono font-bold ${
-                                      isHolidayOrSunday
+                                    className={`text-xs font-mono font-bold ${isHolidayOrSunday
                                         ? 'text-rose-400'
                                         : isSaturday
-                                        ? 'text-blue-400'
-                                        : isToday
-                                        ? 'text-indigo-400 underline underline-offset-2'
-                                        : 'text-slate-200'
-                                    }`}
+                                          ? 'text-blue-400'
+                                          : isToday
+                                            ? 'text-indigo-400 underline underline-offset-2'
+                                            : 'text-slate-200'
+                                      }`}
                                   >
                                     {dateNum}
                                   </span>
@@ -1226,13 +1213,12 @@ export default function App() {
                                   className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200"
                                 >
                                   <div className="flex items-center gap-2 overflow-hidden">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
-                                      evt.category === '시험/코테'
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${evt.category === '시험/코테'
                                         ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                                         : evt.category === '스터디'
-                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                    }`}>
+                                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                      }`}>
                                       {evt.category}
                                     </span>
                                     <span className="font-medium truncate">{evt.title}</span>
@@ -1481,9 +1467,8 @@ export default function App() {
                   <button
                     key={tag}
                     onClick={() => setSelectedTag(tag)}
-                    className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${
-                      selectedTag === tag ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                    }`}
+                    className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${selectedTag === tag ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
                   >
                     {tag}
                   </button>
@@ -1627,11 +1612,10 @@ export default function App() {
                   <button
                     key={tab}
                     onClick={() => setSelectedCertTab(tab)}
-                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
-                      selectedCertTab === tab
+                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${selectedCertTab === tab
                         ? 'bg-amber-500 text-slate-950 font-bold shadow'
                         : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                    }`}
+                      }`}
                   >
                     {tab === 'ALL' ? '전체 자격증 보기' : tab}
                   </button>
@@ -1871,11 +1855,10 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => handleFontSizeChange('normal')}
-                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
-                      fontSizeLevel === 'normal'
+                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${fontSizeLevel === 'normal'
                         ? 'bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-600/20 font-bold'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <span className="text-xs font-semibold">보통 (Normal)</span>
                     <span className="text-[11px] text-slate-500">기본 크기 (100%)</span>
@@ -1884,11 +1867,10 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => handleFontSizeChange('large')}
-                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
-                      fontSizeLevel === 'large'
+                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${fontSizeLevel === 'large'
                         ? 'bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-600/20 font-bold'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <span className="text-sm font-semibold">크게 (Large)</span>
                     <span className="text-[11px] text-slate-500">가독성 향상 (115%)</span>
@@ -1897,11 +1879,10 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => handleFontSizeChange('xlarge')}
-                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
-                      fontSizeLevel === 'xlarge'
+                    className={`py-3 px-4 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${fontSizeLevel === 'xlarge'
                         ? 'bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-600/20 font-bold'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <span className="text-base font-semibold">아주 크게 (XL)</span>
                     <span className="text-[11px] text-slate-500">시원한 글씨 (130%)</span>
