@@ -24,7 +24,8 @@ import {
   HelpCircle,
   RotateCcw,
   Settings,
-  X
+  X,
+  Edit3
 } from 'lucide-react';
 
 const REPO_OWNER = 'AshGray-Garlic';
@@ -57,6 +58,10 @@ export default function App() {
   const [platforms, setPlatforms] = useState(DEFAULT_PLATFORMS);
   const [newPlatformInput, setNewPlatformInput] = useState('');
   const [customPlatformMode, setCustomPlatformMode] = useState(false);
+
+  // Edit Mode States
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Load Data from GitHub API
   const loadDataFromGithub = async (token = githubToken) => {
@@ -261,6 +266,70 @@ export default function App() {
     setTimeout(() => setCopiedId(null), 1800);
   };
 
+  // Open Edit Modal
+  const handleOpenEdit = (category, item) => {
+    setIsEditMode(true);
+    setEditingId(item.id);
+    setNewNoteCategory(category);
+
+    if (category === 'algo') {
+      setNewNoteData({
+        title: item.title || '',
+        platform: item.platform || platforms[0] || 'SWEA',
+        difficulty: item.difficulty || '',
+        tags: item.tags ? item.tags.join(', ') : '',
+        code: item.code || '',
+        summary: item.summary || '',
+        keyPoint: item.keyPoint || '',
+        subCategory: '',
+        certQuestion: '',
+        certAnswer: ''
+      });
+      setCustomPlatformMode(!platforms.includes(item.platform));
+    } else if (category === 'cert') {
+      setNewNoteData({
+        title: item.title || '',
+        platform: 'SWEA',
+        difficulty: '',
+        tags: item.tags ? item.tags.join(', ') : '',
+        code: '',
+        summary: item.summary || '',
+        keyPoint: item.keyPoint || '',
+        subCategory: item.certName || '',
+        certQuestion: item.question || '',
+        certAnswer: item.answer || ''
+      });
+    } else if (category === 'cs') {
+      setNewNoteData({
+        title: item.title || '',
+        platform: 'SWEA',
+        difficulty: '',
+        tags: '',
+        code: '',
+        summary: item.concept || '',
+        keyPoint: item.interviewQA?.[0]?.a || '',
+        subCategory: item.domain || '',
+        certQuestion: item.interviewQA?.[0]?.q || '',
+        certAnswer: ''
+      });
+    } else if (category === 'lang') {
+      setNewNoteData({
+        title: item.title || '',
+        platform: 'SWEA',
+        difficulty: '',
+        tags: '',
+        code: '',
+        summary: item.situation || '',
+        keyPoint: item.dialogue?.[0]?.en || '',
+        subCategory: item.category || '',
+        certQuestion: '',
+        certAnswer: item.dialogue?.[0]?.ko || ''
+      });
+    }
+
+    setIsModalOpen(true);
+  };
+
   const certTabOptions = useMemo(() => {
     const set = new Set(['ALL']);
     certList.forEach((c) => set.add(c.title));
@@ -284,18 +353,18 @@ export default function App() {
     return list;
   }, [certNotes]);
 
-  // Create Note Handler
-  const handleCreateNote = async (e) => {
+  // Create or Update Note Handler
+  const handleSaveNote = async (e) => {
     e.preventDefault();
     if (!newNoteData.title.trim()) return;
 
     const tagArray = newNoteData.tags.split(',').map((t) => t.trim()).filter(Boolean);
 
-    let updatedAlgo = algoList;
-    let updatedCertNotes = certNotes;
-    let updatedCs = csList;
-    let updatedLang = langList;
-    let updatedPlatforms = platforms;
+    let updatedAlgo = [...algoList];
+    let updatedCertNotes = [...certNotes];
+    let updatedCs = [...csList];
+    let updatedLang = [...langList];
+    let updatedPlatforms = [...platforms];
 
     if (newNoteCategory === 'algo') {
       const chosenPlatform = newNoteData.platform.trim() || 'Custom';
@@ -304,71 +373,144 @@ export default function App() {
         setPlatforms(updatedPlatforms);
       }
 
-      const newAlgo = {
-        id: `algo-${Date.now()}`,
-        title: newNoteData.title,
-        platform: chosenPlatform,
-        problemNumber: 'NEW',
-        difficulty: newNoteData.difficulty,
-        tags: tagArray.length > 0 ? tagArray : ['구현'],
-        timeComplexity: 'O(N)',
-        spaceComplexity: 'O(N)',
-        status: 'Solved',
-        summary: newNoteData.summary || '문제 요약 내용',
-        keyPoint: newNoteData.keyPoint || '핵심 알고리즘 접근법',
-        codeLanguage: 'java',
-        code: newNoteData.code || '// 풀이 코드를 입력하세요\npublic class Main {\n}',
-        retrospective: '새로 추가된 학습 기록'
-      };
-      updatedAlgo = [newAlgo, ...algoList];
+      if (isEditMode && editingId) {
+        updatedAlgo = updatedAlgo.map((item) =>
+          item.id === editingId
+            ? {
+                ...item,
+                title: newNoteData.title,
+                platform: chosenPlatform,
+                difficulty: newNoteData.difficulty,
+                tags: tagArray.length > 0 ? tagArray : ['구현'],
+                summary: newNoteData.summary,
+                keyPoint: newNoteData.keyPoint,
+                code: newNoteData.code
+              }
+            : item
+        );
+      } else {
+        const newAlgo = {
+          id: `algo-${Date.now()}`,
+          title: newNoteData.title,
+          platform: chosenPlatform,
+          problemNumber: 'NEW',
+          difficulty: newNoteData.difficulty,
+          tags: tagArray.length > 0 ? tagArray : ['구현'],
+          timeComplexity: 'O(N)',
+          spaceComplexity: 'O(N)',
+          status: 'Solved',
+          summary: newNoteData.summary || '문제 요약 내용',
+          keyPoint: newNoteData.keyPoint || '핵심 알고리즘 접근법',
+          codeLanguage: 'java',
+          code: newNoteData.code || '// 풀이 코드를 입력하세요\npublic class Main {\n}',
+          retrospective: '학습 기록'
+        };
+        updatedAlgo = [newAlgo, ...updatedAlgo];
+      }
       setAlgoList(updatedAlgo);
       setActiveTab('algo');
     } else if (newNoteCategory === 'cert') {
-      const newCertNote = {
-        id: `cert-note-${Date.now()}`,
-        certName: newNoteData.subCategory || '기술면접',
-        title: newNoteData.title,
-        tags: tagArray.length > 0 ? tagArray : ['핵심암기'],
-        summary: newNoteData.summary || '공부한 핵심 이론 및 요약 내용',
-        keyPoint: newNoteData.keyPoint || '',
-        question: newNoteData.certQuestion || '',
-        answer: newNoteData.certAnswer || ''
-      };
-      updatedCertNotes = [newCertNote, ...certNotes];
+      if (isEditMode && editingId) {
+        updatedCertNotes = updatedCertNotes.map((item) =>
+          item.id === editingId
+            ? {
+                ...item,
+                certName: newNoteData.subCategory || '자격증',
+                title: newNoteData.title,
+                tags: tagArray.length > 0 ? tagArray : ['핵심암기'],
+                summary: newNoteData.summary,
+                keyPoint: newNoteData.keyPoint,
+                question: newNoteData.certQuestion,
+                answer: newNoteData.certAnswer
+              }
+            : item
+        );
+      } else {
+        const newCertNote = {
+          id: `cert-note-${Date.now()}`,
+          certName: newNoteData.subCategory || '자격증',
+          title: newNoteData.title,
+          tags: tagArray.length > 0 ? tagArray : ['핵심암기'],
+          summary: newNoteData.summary || '공부한 핵심 이론 및 요약 내용',
+          keyPoint: newNoteData.keyPoint || '',
+          question: newNoteData.certQuestion || '',
+          answer: newNoteData.certAnswer || ''
+        };
+        updatedCertNotes = [newCertNote, ...updatedCertNotes];
+      }
       setCertNotes(updatedCertNotes);
       setActiveTab('cert');
     } else if (newNoteCategory === 'cs') {
-      const newCs = {
-        id: `cs-${Date.now()}`,
-        domain: newNoteData.subCategory || 'Network',
-        title: newNoteData.title,
-        importance: 'High (★ 4.0)',
-        concept: newNoteData.summary || '개념 정의 및 상세 메커니즘',
-        interviewQA: [
-          {
-            q: `${newNoteData.title}의 핵심 원리는 무엇인가요?`,
-            a: newNoteData.keyPoint || '상세 답변 내용'
-          }
-        ]
-      };
-      updatedCs = [newCs, ...csList];
+      if (isEditMode && editingId) {
+        updatedCs = updatedCs.map((item) =>
+          item.id === editingId
+            ? {
+                ...item,
+                domain: newNoteData.subCategory || 'CS',
+                title: newNoteData.title,
+                concept: newNoteData.summary,
+                interviewQA: [
+                  {
+                    q: newNoteData.certQuestion || `${newNoteData.title}의 핵심 원리는 무엇인가요?`,
+                    a: newNoteData.keyPoint || '상세 내용'
+                  }
+                ]
+              }
+            : item
+        );
+      } else {
+        const newCs = {
+          id: `cs-${Date.now()}`,
+          domain: newNoteData.subCategory || 'Network',
+          title: newNoteData.title,
+          importance: 'High (★ 4.0)',
+          concept: newNoteData.summary || '개념 정의 및 상세 메커니즘',
+          interviewQA: [
+            {
+              q: `${newNoteData.title}의 핵심 원리는 무엇인가요?`,
+              a: newNoteData.keyPoint || '상세 답변 내용'
+            }
+          ]
+        };
+        updatedCs = [newCs, ...updatedCs];
+      }
       setCsList(updatedCs);
       setActiveTab('cs');
     } else if (newNoteCategory === 'lang') {
-      const newLang = {
-        id: `lang-${Date.now()}`,
-        category: 'Personal Log',
-        title: newNoteData.title,
-        situation: newNoteData.summary || '상황 및 뉘앙스',
-        dialogue: [
-          {
-            speaker: 'User',
-            en: newNoteData.keyPoint || 'I would like to express this clearly.',
-            ko: '이 표현을 명확히 전달하고 싶습니다.'
-          }
-        ]
-      };
-      updatedLang = [newLang, ...langList];
+      if (isEditMode && editingId) {
+        updatedLang = updatedLang.map((item) =>
+          item.id === editingId
+            ? {
+                ...item,
+                category: newNoteData.subCategory || 'Personal Log',
+                title: newNoteData.title,
+                situation: newNoteData.summary,
+                dialogue: [
+                  {
+                    speaker: 'User',
+                    en: newNoteData.keyPoint || 'I would like to express this clearly.',
+                    ko: newNoteData.certAnswer || '이 표현을 명확히 전달하고 싶습니다.'
+                  }
+                ]
+              }
+            : item
+        );
+      } else {
+        const newLang = {
+          id: `lang-${Date.now()}`,
+          category: 'Personal Log',
+          title: newNoteData.title,
+          situation: newNoteData.summary || '상황 및 뉘앙스',
+          dialogue: [
+            {
+              speaker: 'User',
+              en: newNoteData.keyPoint || 'I would like to express this clearly.',
+              ko: '이 표현을 명확히 전달하고 싶습니다.'
+            }
+          ]
+        };
+        updatedLang = [newLang, ...updatedLang];
+      }
       setLangList(updatedLang);
       setActiveTab('language');
     }
@@ -384,6 +526,7 @@ export default function App() {
 
     await commitToGithub(fullData);
 
+    // Reset Form
     setNewNoteData({
       title: '',
       platform: updatedPlatforms[0] || 'SWEA',
@@ -396,6 +539,8 @@ export default function App() {
       certQuestion: '',
       certAnswer: ''
     });
+    setIsEditMode(false);
+    setEditingId(null);
     setCustomPlatformMode(false);
     setIsModalOpen(false);
   };
@@ -450,8 +595,23 @@ export default function App() {
 
           <button
             onClick={() => {
+              setIsEditMode(false);
+              setEditingId(null);
               setNewNoteCategory('algo');
-              if (platforms.length > 0) setNewNoteData((prev) => ({ ...prev, platform: platforms[0] }));
+              if (platforms.length > 0) {
+                setNewNoteData({
+                  title: '',
+                  platform: platforms[0],
+                  difficulty: '',
+                  tags: '',
+                  code: '',
+                  summary: '',
+                  keyPoint: '',
+                  subCategory: '',
+                  certQuestion: '',
+                  certAnswer: ''
+                });
+              }
               setIsModalOpen(true);
             }}
             className="w-full mb-6 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-medium text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition-all"
@@ -463,8 +623,9 @@ export default function App() {
           <nav className="space-y-1.5">
             <button
               onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'dashboard' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <LayoutDashboard className="w-4 h-4" />
@@ -474,8 +635,9 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('algo'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'algo' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <Code2 className="w-4 h-4 text-emerald-400" />
@@ -488,8 +650,9 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('cert'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'cert' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <Award className="w-4 h-4 text-amber-400" />
@@ -502,8 +665,9 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('cs'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'cs' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <Cpu className="w-4 h-4 text-blue-400" />
@@ -516,8 +680,9 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('language'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'language' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'language' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <Languages className="w-4 h-4 text-rose-400" />
@@ -530,8 +695,9 @@ export default function App() {
 
             <button
               onClick={() => { setActiveTab('settings'); setSearchQuery(''); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'settings' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'settings' ? 'bg-slate-800 text-indigo-400 border border-slate-700/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <Settings className="w-4 h-4 text-purple-400" />
@@ -599,10 +765,9 @@ export default function App() {
         </header>
 
         <div className="p-6 md:p-8 space-y-8 flex-1">
-          {/* TAB 1: DASHBOARD (통합 검색 지원) */}
+          {/* TAB 1: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-8 animate-fadeIn">
-              {/* 검색어가 없을 때: 기본 대시보드 통계 화면 */}
               {!searchQuery.trim() ? (
                 <>
                   <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-800/40">
@@ -676,7 +841,7 @@ export default function App() {
                   </div>
                 </>
               ) : (
-                /* 검색어가 있을 때: 통합 검색 결과 뷰 */
+                /* 통합 검색 결과 뷰 */
                 <div className="space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -837,8 +1002,23 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => {
+                      setIsEditMode(false);
+                      setEditingId(null);
                       setNewNoteCategory('algo');
-                      if (platforms.length > 0) setNewNoteData((prev) => ({ ...prev, platform: platforms[0] }));
+                      if (platforms.length > 0) {
+                        setNewNoteData({
+                          title: '',
+                          platform: platforms[0],
+                          difficulty: '',
+                          tags: '',
+                          code: '',
+                          summary: '',
+                          keyPoint: '',
+                          subCategory: '',
+                          certQuestion: '',
+                          certAnswer: ''
+                        });
+                      }
                       setIsModalOpen(true);
                     }}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
@@ -856,8 +1036,9 @@ export default function App() {
                   <button
                     key={tag}
                     onClick={() => setSelectedTag(tag)}
-                    className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${selectedTag === tag ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                      }`}
+                    className={`text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition ${
+                      selectedTag === tag ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    }`}
                   >
                     {tag}
                   </button>
@@ -883,12 +1064,22 @@ export default function App() {
                             {algo.difficulty}
                           </span>
                         </div>
-                        <button
-                          onClick={() => handleDeleteItem('algo', algo.id)}
-                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 transition"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleOpenEdit('algo', algo)}
+                            title="수정하기"
+                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteItem('algo', algo.id)}
+                            title="삭제하기"
+                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="p-5 space-y-4">
@@ -934,8 +1125,21 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => {
+                    setIsEditMode(false);
+                    setEditingId(null);
                     setNewNoteCategory('cert');
-                    setNewNoteData((prev) => ({ ...prev, subCategory: selectedCertTab === 'ALL' ? '정보처리기사' : selectedCertTab }));
+                    setNewNoteData({
+                      title: '',
+                      platform: 'SWEA',
+                      difficulty: '',
+                      tags: '',
+                      code: '',
+                      summary: '',
+                      keyPoint: '',
+                      subCategory: selectedCertTab === 'ALL' ? '정보처리기사' : selectedCertTab,
+                      certQuestion: '',
+                      certAnswer: ''
+                    });
                     setIsModalOpen(true);
                   }}
                   className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow"
@@ -952,10 +1156,11 @@ export default function App() {
                   <button
                     key={tab}
                     onClick={() => setSelectedCertTab(tab)}
-                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${selectedCertTab === tab
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                      }`}
+                    className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+                      selectedCertTab === tab
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    }`}
                   >
                     {tab === 'ALL' ? '전체 자격증 보기' : tab}
                   </button>
@@ -979,12 +1184,22 @@ export default function App() {
                           </span>
                           <h3 className="text-base font-bold text-white">{note.title}</h3>
                         </div>
-                        <button
-                          onClick={() => handleDeleteItem('certNote', note.id)}
-                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 transition"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleOpenEdit('cert', note)}
+                            title="수정하기"
+                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteItem('certNote', note.id)}
+                            title="삭제하기"
+                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800/80 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
@@ -1013,7 +1228,24 @@ export default function App() {
                   컴퓨터 사이언스 & 기술 면접
                 </h2>
                 <button
-                  onClick={() => { setNewNoteCategory('cs'); setIsModalOpen(true); }}
+                  onClick={() => {
+                    setIsEditMode(false);
+                    setEditingId(null);
+                    setNewNoteCategory('cs');
+                    setNewNoteData({
+                      title: '',
+                      platform: 'SWEA',
+                      difficulty: '',
+                      tags: '',
+                      code: '',
+                      summary: '',
+                      keyPoint: '',
+                      subCategory: '운영체제(OS)',
+                      certQuestion: '',
+                      certAnswer: ''
+                    });
+                    setIsModalOpen(true);
+                  }}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition"
                 >
                   <Plus className="w-4 h-4" />
@@ -1031,12 +1263,22 @@ export default function App() {
                         </span>
                         <h3 className="text-lg font-bold text-white mt-1.5">{cs.title}</h3>
                       </div>
-                      <button
-                        onClick={() => handleDeleteItem('cs', cs.id)}
-                        className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleOpenEdit('cs', cs)}
+                          title="수정하기"
+                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteItem('cs', cs.id)}
+                          title="삭제하기"
+                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
@@ -1057,7 +1299,24 @@ export default function App() {
                   어학 및 테크 영어
                 </h2>
                 <button
-                  onClick={() => { setNewNoteCategory('lang'); setIsModalOpen(true); }}
+                  onClick={() => {
+                    setIsEditMode(false);
+                    setEditingId(null);
+                    setNewNoteCategory('lang');
+                    setNewNoteData({
+                      title: '',
+                      platform: 'SWEA',
+                      difficulty: '',
+                      tags: '',
+                      code: '',
+                      summary: '',
+                      keyPoint: '',
+                      subCategory: 'Personal Log',
+                      certQuestion: '',
+                      certAnswer: ''
+                    });
+                    setIsModalOpen(true);
+                  }}
                   className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition"
                 >
                   <Plus className="w-4 h-4" />
@@ -1075,12 +1334,22 @@ export default function App() {
                         </span>
                         <h3 className="text-lg font-bold text-white mt-1.5">{item.title}</h3>
                       </div>
-                      <button
-                        onClick={() => handleDeleteItem('lang', item.id)}
-                        className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleOpenEdit('lang', item)}
+                          title="수정하기"
+                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteItem('lang', item.id)}
+                          title="삭제하기"
+                          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -1239,54 +1508,58 @@ export default function App() {
         </div>
       )}
 
-      {/* NEW NOTE MODAL (커스텀 플랫폼 연동) */}
+      {/* CREATE / EDIT NOTE MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Plus className="w-4 h-4 text-indigo-400" />
-                새 학습 기록 작성
+                {isEditMode ? <Edit3 className="w-4 h-4 text-amber-400" /> : <Plus className="w-4 h-4 text-indigo-400" />}
+                {isEditMode ? '학습 기록 수정' : '새 학습 기록 작성'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 text-xs px-2 py-1 rounded bg-slate-800">닫기</button>
             </div>
 
-            <form onSubmit={handleCreateNote} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveNote} className="space-y-4 text-xs">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1.5">카테고리</label>
                 <div className="grid grid-cols-4 gap-2">
                   <button
                     type="button"
+                    disabled={isEditMode}
                     onClick={() => setNewNoteCategory('algo')}
-                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'algo' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'algo' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400'} ${isEditMode ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     알고리즘
                   </button>
                   <button
                     type="button"
+                    disabled={isEditMode}
                     onClick={() => setNewNoteCategory('cert')}
-                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'cert' ? 'bg-amber-500/20 border-amber-500 text-amber-300' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'cert' ? 'bg-amber-500/20 border-amber-500 text-amber-300' : 'bg-slate-950 border-slate-800 text-slate-400'} ${isEditMode ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     자격증
                   </button>
                   <button
                     type="button"
+                    disabled={isEditMode}
                     onClick={() => setNewNoteCategory('cs')}
-                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'cs' ? 'bg-blue-500/20 border-blue-500 text-blue-300' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'cs' ? 'bg-blue-500/20 border-blue-500 text-blue-300' : 'bg-slate-950 border-slate-800 text-slate-400'} ${isEditMode ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     CS 이론
                   </button>
                   <button
                     type="button"
+                    disabled={isEditMode}
                     onClick={() => setNewNoteCategory('lang')}
-                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'lang' ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                    className={`py-2 rounded-xl border font-medium ${newNoteCategory === 'lang' ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-400'} ${isEditMode ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     어학
                   </button>
                 </div>
               </div>
 
-              {/* 알고리즘 플랫폼 선택 (커스텀 플랫폼 목록 연동) */}
+              {/* 알고리즘 플랫폼 선택 */}
               {newNoteCategory === 'algo' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -1348,7 +1621,7 @@ export default function App() {
                   />
                 </div>
               )}
-              {/* CS 도메인(분야) 선택 및 직접 입력 */}
+
               {newNoteCategory === 'cs' && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -1365,6 +1638,7 @@ export default function App() {
                   />
                 </div>
               )}
+
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">제목</label>
                 <input
@@ -1402,6 +1676,19 @@ export default function App() {
                 </div>
               )}
 
+              {newNoteCategory === 'cert' && (
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">시험 포인트 / 오답 유의사항 (선택)</label>
+                  <input
+                    type="text"
+                    placeholder="예: 실기 단답형 빈출 용어"
+                    value={newNoteData.keyPoint}
+                    onChange={(e) => setNewNoteData({ ...newNoteData, keyPoint: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">태그 (쉼표 구분)</label>
                 <input
@@ -1418,7 +1705,7 @@ export default function App() {
                   취소
                 </button>
                 <button type="submit" disabled={isSyncing} className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white shadow">
-                  {isSyncing ? '동기화 중...' : '저장 및 GitHub 동기화'}
+                  {isSyncing ? '동기화 중...' : (isEditMode ? '수정사항 저장 및 GitHub 동기화' : '저장 및 GitHub 동기화')}
                 </button>
               </div>
             </form>
