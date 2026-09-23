@@ -164,13 +164,13 @@ export default function App() {
     setExpandedCodeData(null);
   }, [activeTab]);
 
-  // 대시보드 및 설정 통합 검색 결과에서 특정 탭으로 이동할 때 호출
+  // 대시보드 및 설정의 'ㅇㅇㅇ 탭으로 이동 →' 클릭 시 (검색어를 비우고 전체 탭 리스트로 이동)
   const navigateToTab = (tabName) => {
     setActiveTab(tabName);
     setSearchQuery('');
   };
 
-  // 통합 검색 결과 카드 클릭 시 해당 데이터가 보이는 탭 및 필터로 이동
+  // 검색 결과 카드 클릭 시: 검색어(searchQuery)를 유지하여 필터링된 상태의 해당 탭으로 이동
   const navigateToItem = (category, item) => {
     if (category === 'algo') {
       setActiveTab('algo');
@@ -187,7 +187,7 @@ export default function App() {
     } else if (category === 'lang') {
       setActiveTab('language');
     }
-    setSearchQuery('');
+    // searchQuery는 유지하여 목표 탭에서 검색어가 필터링된 상태로 보이도록 함
   };
 
   // 현재 탭에 맞는 검색창 안내 문구
@@ -1230,7 +1230,7 @@ export default function App() {
                           {algo.summary}
                         </p>
                         <span className="text-[10px] text-emerald-500 font-semibold block pt-1">
-                          클릭하여 알고리즘 탭에서 보기 →
+                          클릭하여 필터링된 알고리즘 탭에서 보기 →
                         </span>
                       </div>
                     ))}
@@ -1275,7 +1275,7 @@ export default function App() {
                           {note.summary}
                         </p>
                         <span className="text-[10px] text-amber-500 font-semibold block pt-1">
-                          클릭하여 자격증 탭에서 보기 →
+                          클릭하여 필터링된 자격증 탭에서 보기 →
                         </span>
                       </div>
                     ))}
@@ -1320,7 +1320,7 @@ export default function App() {
                           {item.concept}
                         </p>
                         <span className="text-[10px] text-blue-500 font-semibold block pt-1">
-                          클릭하여 CS 탭에서 보기 →
+                          클릭하여 필터링된 CS 탭에서 보기 →
                         </span>
                       </div>
                     ))}
@@ -1365,7 +1365,7 @@ export default function App() {
                           {item.situation}
                         </p>
                         <span className="text-[10px] text-rose-500 font-semibold block pt-1">
-                          클릭하여 어학 탭에서 보기 →
+                          클릭하여 필터링된 어학 탭에서 보기 →
                         </span>
                       </div>
                     ))}
@@ -2159,7 +2159,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 6: SETTINGS (검색어 없을 때 기본 환경 설정 화면) */}
+              {/* TAB 6: SETTINGS */}
               {activeTab === 'settings' && (
                 <div className="space-y-6 animate-fadeIn max-w-3xl">
                   <div>
