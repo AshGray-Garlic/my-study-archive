@@ -238,7 +238,7 @@ export default function App() {
     code: '',
     summary: '',
     keyPoint: '',
-    subCategory: '태그 입력',
+    subCategory: '',
     certQuestion: '',
     certAnswer: ''
   });
@@ -392,7 +392,7 @@ export default function App() {
       code: '',
       summary: '',
       keyPoint: '',
-      subCategory: '태그 입력',
+      subCategory: '',
       certQuestion: '',
       certAnswer: ''
     });
@@ -1406,7 +1406,7 @@ export default function App() {
                 <label className="block text-slate-300 font-semibold mb-1">태그 (쉼표 구분)</label>
                 <input
                   type="text"
-                  placeholder=""
+                  placeholder="태그 입력"
                   value={newNoteData.tags}
                   onChange={(e) => setNewNoteData({ ...newNoteData, tags: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200"
