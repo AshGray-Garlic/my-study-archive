@@ -27,7 +27,9 @@ import {
   X,
   Edit3,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 
 const REPO_OWNER = 'AshGray-Garlic';
@@ -139,6 +141,9 @@ export default function App() {
   // Edit Mode States
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  // Code Viewer (Expanded Modal) State
+  const [expandedCodeData, setExpandedCodeData] = useState(null);
 
   // Load Data from GitHub API
   const loadDataFromGithub = async (token = githubToken) => {
@@ -866,8 +871,60 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen">
+      {/* Main Content Area (relative: 코드 뷰어가 이 영역 전체를 덮음) */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen relative">
+        {/* EXPANDED CODE VIEWER OVERLAY (좌측 바 제외 메인 화면 전체 커버) */}
+        {expandedCodeData && (
+          <div className="absolute inset-0 z-40 bg-slate-950 flex flex-col animate-fadeIn">
+            {/* Expanded Header */}
+            <div className="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0 shadow-md">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shrink-0">
+                  <Code2 className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      {expandedCodeData.platform} #{expandedCodeData.problemNumber}
+                    </span>
+                    <h2 className="text-base font-bold text-white truncate">{expandedCodeData.title}</h2>
+                    <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                      {expandedCodeData.difficulty}
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono uppercase text-emerald-400 mt-0.5 block">
+                    Language: {expandedCodeData.codeLanguage || 'java'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleCopy('expanded', expandedCodeData.code)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-xl transition"
+                >
+                  {copiedId === 'expanded' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedId === 'expanded' ? '복사됨!' : '전체 코드 복사'}</span>
+                </button>
+                <button
+                  onClick={() => setExpandedCodeData(null)}
+                  className="p-2 bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 rounded-xl transition"
+                  title="전체화면 닫기 (ESC)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Expanded Code Body */}
+            <div className="flex-1 overflow-auto p-6 md:p-8 bg-slate-950 font-mono text-sm text-slate-200 leading-relaxed scrollbar-thin">
+              <pre className="selection:bg-indigo-500/30">
+                <code>{expandedCodeData.code}</code>
+              </pre>
+            </div>
+          </div>
+        )}
+
         <header className="sticky top-0 z-10 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-96">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -979,7 +1036,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* STUDY CALENDAR SECTION (공휴일 & 요일별 색상 적용) */}
+                  {/* STUDY CALENDAR SECTION */}
                   <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-7 space-y-6 shadow-xl">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
                       <div className="flex items-center gap-3">
@@ -1041,7 +1098,6 @@ export default function App() {
                               today.getMonth() === month &&
                               today.getDate() === dateNum;
 
-                            // Day of week: 0 = Sunday, 6 = Saturday
                             const dayOfWeek = new Date(year, month, dateNum).getDay();
                             const holidayName = HOLIDAYS[dateStr] || null;
                             const isHolidayOrSunday = dayOfWeek === 0 || Boolean(holidayName);
@@ -1076,7 +1132,6 @@ export default function App() {
                                     {dateNum}
                                   </span>
 
-                                  {/* 공휴일 배지 */}
                                   {holidayName && (
                                     <span className="text-[9px] px-1 py-0.2 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans truncate max-w-[42px] sm:max-w-[50px]">
                                       {holidayName}
@@ -1438,21 +1493,48 @@ export default function App() {
                           {algo.summary}
                         </div>
 
+                        {/* Code Container (클릭 시 와이드 뷰어 실행) */}
                         {algo.code && (
-                          <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+                          <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 group">
                             <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-slate-800 text-xs text-slate-400">
                               <span className="font-mono uppercase text-emerald-400 font-semibold">{algo.codeLanguage || 'code'}</span>
-                              <button
-                                onClick={() => handleCopy(algo.id, algo.code)}
-                                className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md transition"
-                              >
-                                {copiedId === algo.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                                <span>{copiedId === algo.id ? '복사됨!' : '코드 복사'}</span>
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedCodeData(algo)}
+                                  className="flex items-center gap-1 text-[11px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md transition"
+                                  title="전체화면으로 보기"
+                                >
+                                  <Maximize2 className="w-3 h-3 text-emerald-400" />
+                                  <span>크게 보기</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(algo.id, algo.code)}
+                                  className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md transition"
+                                >
+                                  {copiedId === algo.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                  <span>{copiedId === algo.id ? '복사됨!' : '코드 복사'}</span>
+                                </button>
+                              </div>
                             </div>
-                            <pre className="p-4 text-xs font-mono text-slate-300 overflow-x-auto max-h-64 scrollbar-thin">
-                              <code>{algo.code}</code>
-                            </pre>
+
+                            {/* Clickable Code Area */}
+                            <div
+                              onClick={() => setExpandedCodeData(algo)}
+                              className="cursor-pointer relative"
+                              title="클릭하면 좌측 바 제외 전체화면으로 코드가 확대됩니다."
+                            >
+                              <pre className="p-4 text-xs font-mono text-slate-300 overflow-x-auto max-h-64 scrollbar-thin">
+                                <code>{algo.code}</code>
+                              </pre>
+                              <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors flex items-center justify-center pointer-events-none">
+                                <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/90 border border-slate-700 text-slate-200 text-xs px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5">
+                                  <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>클릭하여 전체화면으로 보기</span>
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
