@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Search,
   Plus,
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   Sparkles,
   Volume2,
@@ -25,7 +25,9 @@ import {
   RotateCcw,
   Settings,
   X,
-  Edit3
+  Edit3,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const REPO_OWNER = 'AshGray-Garlic';
@@ -53,11 +55,21 @@ export default function App() {
   const [certNotes, setCertNotes] = useState([]);
   const [csList, setCsList] = useState([]);
   const [langList, setLangList] = useState([]);
+  const [eventsList, setEventsList] = useState([]); // 캘린더 일정 목록
 
   // Custom Platform Settings State
   const [platforms, setPlatforms] = useState(DEFAULT_PLATFORMS);
   const [newPlatformInput, setNewPlatformInput] = useState('');
   const [customPlatformMode, setCustomPlatformMode] = useState(false);
+
+  // Calendar State
+  const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
+  const [selectedDateStr, setSelectedDateStr] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  });
+  const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventCategory, setNewEventCategory] = useState('시험/코테');
 
   // Edit Mode States
   const [isEditMode, setIsEditMode] = useState(false);
@@ -81,6 +93,7 @@ export default function App() {
         setCertNotes(data.certNotes || []);
         setCsList(data.csTopics || []);
         setLangList(data.languages || []);
+        setEventsList(data.events || []);
         if (data.platforms && Array.isArray(data.platforms) && data.platforms.length > 0) {
           setPlatforms(data.platforms);
         }
@@ -93,6 +106,7 @@ export default function App() {
           setCertNotes(parsed.certNotes || []);
           setCsList(parsed.csTopics || []);
           setLangList(parsed.languages || []);
+          setEventsList(parsed.events || []);
           if (parsed.platforms) setPlatforms(parsed.platforms);
         }
       }
@@ -150,6 +164,59 @@ export default function App() {
     }
   };
 
+  // Calendar Event Handlers
+  const handleAddEvent = async (e) => {
+    e.preventDefault();
+    if (!newEventTitle.trim()) return;
+
+    const newEvent = {
+      id: `evt-${Date.now()}`,
+      date: selectedDateStr,
+      title: newEventTitle.trim(),
+      category: newEventCategory
+    };
+
+    const updatedEvents = [...eventsList, newEvent];
+    setEventsList(updatedEvents);
+    setNewEventTitle('');
+
+    const fullData = {
+      algorithms: algoList,
+      certifications: certList,
+      certNotes: certNotes,
+      csTopics: csList,
+      languages: langList,
+      platforms: platforms,
+      events: updatedEvents
+    };
+    await commitToGithub(fullData);
+  };
+
+  const handleDeleteEvent = async (id) => {
+    const updatedEvents = eventsList.filter((evt) => evt.id !== id);
+    setEventsList(updatedEvents);
+
+    const fullData = {
+      algorithms: algoList,
+      certifications: certList,
+      certNotes: certNotes,
+      csTopics: csList,
+      languages: langList,
+      platforms: platforms,
+      events: updatedEvents
+    };
+    await commitToGithub(fullData);
+  };
+
+  // Calendar Math Helpers
+  const year = currentMonthDate.getFullYear();
+  const month = currentMonthDate.getMonth();
+  const firstDayIndex = new Date(year, month, 1).getDay();
+  const lastDate = new Date(year, month + 1, 0).getDate();
+
+  const prevMonth = () => setCurrentMonthDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setCurrentMonthDate(new Date(year, month + 1, 1));
+
   // Platform Management Handlers
   const handleAddPlatform = async (e) => {
     e.preventDefault();
@@ -169,7 +236,8 @@ export default function App() {
       certNotes: certNotes,
       csTopics: csList,
       languages: langList,
-      platforms: updated
+      platforms: updated,
+      events: eventsList
     };
     await commitToGithub(fullData);
   };
@@ -189,7 +257,8 @@ export default function App() {
       certNotes: certNotes,
       csTopics: csList,
       languages: langList,
-      platforms: updated
+      platforms: updated,
+      events: eventsList
     };
     await commitToGithub(fullData);
   };
@@ -216,7 +285,8 @@ export default function App() {
       certNotes: updatedCertNotes,
       csTopics: updatedCs,
       languages: updatedLang,
-      platforms: platforms
+      platforms: platforms,
+      events: eventsList
     };
 
     setAlgoList(updatedAlgo);
@@ -461,7 +531,7 @@ export default function App() {
       } else {
         const newCs = {
           id: `cs-${Date.now()}`,
-          domain: newNoteData.subCategory || 'Network',
+          domain: newNoteData.subCategory || '운영체제(OS)',
           title: newNoteData.title,
           importance: 'High (★ 4.0)',
           concept: newNoteData.summary || '개념 정의 및 상세 메커니즘',
@@ -521,12 +591,12 @@ export default function App() {
       certNotes: updatedCertNotes,
       csTopics: updatedCs,
       languages: updatedLang,
-      platforms: updatedPlatforms
+      platforms: updatedPlatforms,
+      events: eventsList
     };
 
     await commitToGithub(fullData);
 
-    // Reset Form
     setNewNoteData({
       title: '',
       platform: updatedPlatforms[0] || 'SWEA',
@@ -575,6 +645,11 @@ export default function App() {
       return matchesSearch && matchesTag;
     });
   }, [algoList, searchQuery, selectedTag]);
+
+  // Calendar selected date events
+  const selectedDateEvents = useMemo(() => {
+    return eventsList.filter((evt) => evt.date === selectedDateStr);
+  }, [eventsList, selectedDateStr]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col md:flex-row">
@@ -782,8 +857,8 @@ export default function App() {
                     </p>
                   </div>
 
+                  {/* 4 Stat Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {/* 알고리즘 블록 */}
                     <div
                       onClick={() => { setActiveTab('algo'); setSearchQuery(''); }}
                       className="bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group select-none"
@@ -797,7 +872,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* 자격증 블록 */}
                     <div
                       onClick={() => { setActiveTab('cert'); setSearchQuery(''); }}
                       className="bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/10 group select-none"
@@ -811,7 +885,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* CS 블록 */}
                     <div
                       onClick={() => { setActiveTab('cs'); setSearchQuery(''); }}
                       className="bg-slate-900/80 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/10 group select-none"
@@ -825,7 +898,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* 어학 블록 */}
                     <div
                       onClick={() => { setActiveTab('language'); setSearchQuery(''); }}
                       className="bg-slate-900/80 border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-rose-500/10 group select-none"
@@ -836,6 +908,186 @@ export default function App() {
                       </div>
                       <div className="text-2xl font-bold text-white font-mono">
                         {langList.length} <span className="text-xs text-slate-400 font-sans font-normal">세트</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* STUDY CALENDAR SECTION */}
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-7 space-y-6 shadow-xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl">
+                          <CalendarIcon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white">학습 & 시험 캘린더</h3>
+                          <p className="text-xs text-slate-400">코딩테스트, 자격증 시험일, 스터디 일정을 기록하고 관리합니다.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start sm:self-center">
+                        <button
+                          onClick={prevMonth}
+                          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                          title="이전 달"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="font-bold text-sm text-white font-mono px-2">
+                          {year}년 {month + 1}월
+                        </span>
+                        <button
+                          onClick={nextMonth}
+                          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                          title="다음 달"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      {/* Left: Month Calendar Grid */}
+                      <div className="lg:col-span-7 space-y-2">
+                        <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-400 pb-2">
+                          <span className="text-rose-400">일</span>
+                          <span>월</span>
+                          <span>화</span>
+                          <span>수</span>
+                          <span>목</span>
+                          <span>금</span>
+                          <span className="text-blue-400">토</span>
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-1">
+                          {Array.from({ length: firstDayIndex }).map((_, i) => (
+                            <div key={`empty-${i}`} className="h-14 sm:h-16 rounded-xl bg-slate-950/20" />
+                          ))}
+
+                          {Array.from({ length: lastDate }).map((_, i) => {
+                            const dateNum = i + 1;
+                            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dateNum).padStart(2, '0')}`;
+                            const isSelected = selectedDateStr === dateStr;
+                            const today = new Date();
+                            const isToday =
+                              today.getFullYear() === year &&
+                              today.getMonth() === month &&
+                              today.getDate() === dateNum;
+
+                            const dayEvents = eventsList.filter((e) => e.date === dateStr);
+
+                            return (
+                              <button
+                                key={dateStr}
+                                onClick={() => setSelectedDateStr(dateStr)}
+                                className={`h-14 sm:h-16 p-1.5 rounded-xl border flex flex-col justify-between items-start transition-all relative group ${
+                                  isSelected
+                                    ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+                                    : isToday
+                                    ? 'bg-slate-800/80 border-indigo-400/50 text-indigo-300'
+                                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 text-slate-300'
+                                }`}
+                              >
+                                <span className={`text-xs font-mono font-bold ${isToday ? 'text-indigo-400 underline underline-offset-2' : ''}`}>
+                                  {dateNum}
+                                </span>
+
+                                {dayEvents.length > 0 && (
+                                  <div className="w-full flex items-center justify-between">
+                                    <div className="flex gap-1">
+                                      {dayEvents.slice(0, 2).map((_, idx) => (
+                                        <span key={idx} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                                      ))}
+                                    </div>
+                                    <span className="text-[10px] font-mono text-indigo-300 font-semibold bg-indigo-950/70 px-1 rounded">
+                                      {dayEvents.length}
+                                    </span>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Right: Selected Date's Events & Quick Form */}
+                      <div className="lg:col-span-5 flex flex-col justify-between bg-slate-950/60 border border-slate-800/80 rounded-2xl p-5 space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                            <span className="text-xs font-mono text-indigo-400 font-bold flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              {selectedDateStr} 일정 ({selectedDateEvents.length})
+                            </span>
+                            <span className="text-[11px] text-slate-500">클릭한 날짜에 일정 추가</span>
+                          </div>
+
+                          <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+                            {selectedDateEvents.length === 0 ? (
+                              <p className="text-xs text-slate-500 py-8 text-center">
+                                등록된 일정이 없습니다. 아래에서 새 일정을 추가하세요.
+                              </p>
+                            ) : (
+                              selectedDateEvents.map((evt) => (
+                                <div
+                                  key={evt.id}
+                                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200"
+                                >
+                                  <div className="flex items-center gap-2 overflow-hidden">
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                                      evt.category === '시험/코테'
+                                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                        : evt.category === '스터디'
+                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                    }`}>
+                                      {evt.category}
+                                    </span>
+                                    <span className="font-medium truncate">{evt.title}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => handleDeleteEvent(evt.id)}
+                                    title="일정 삭제"
+                                    className="p-1 text-slate-500 hover:text-rose-400 transition ml-2 shrink-0"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Add Event Form */}
+                        <form onSubmit={handleAddEvent} className="pt-3 border-t border-slate-800/80 space-y-2.5">
+                          <div className="flex gap-2">
+                            <select
+                              value={newEventCategory}
+                              onChange={(e) => setNewEventCategory(e.target.value)}
+                              className="bg-slate-900 border border-slate-800 text-slate-300 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-indigo-500 shrink-0"
+                            >
+                              <option value="시험/코테">시험/코테</option>
+                              <option value="자격증">자격증</option>
+                              <option value="스터디">스터디</option>
+                              <option value="과제/제출">과제/제출</option>
+                            </select>
+                            <input
+                              type="text"
+                              required
+                              placeholder="일정 내용 입력 (예: SWEA 모의역량, 정처기 실기)"
+                              value={newEventTitle}
+                              onChange={(e) => setNewEventTitle(e.target.value)}
+                              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={isSyncing}
+                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-white text-xs rounded-xl shadow transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>일정 등록 및 GitHub 동기화</span>
+                          </button>
+                        </form>
                       </div>
                     </div>
                   </div>
@@ -1371,7 +1623,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 6: SETTINGS (플랫폼 관리 세팅) */}
+          {/* TAB 6: SETTINGS */}
           {activeTab === 'settings' && (
             <div className="space-y-6 animate-fadeIn max-w-3xl">
               <div>
@@ -1384,7 +1636,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* 새 플랫폼 추가 폼 */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                 <h3 className="text-sm font-bold text-slate-200">새 플랫폼 추가</h3>
                 <form onSubmit={handleAddPlatform} className="flex gap-2">
@@ -1407,7 +1658,6 @@ export default function App() {
                 </form>
               </div>
 
-              {/* 현재 활성 플랫폼 목록 */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <h3 className="text-sm font-bold text-slate-200">사용 중인 플랫폼 목록 ({platforms.length}개)</h3>
