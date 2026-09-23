@@ -164,6 +164,44 @@ export default function App() {
     setExpandedCodeData(null);
   }, [activeTab]);
 
+  // 대시보드 및 설정 통합 검색 결과에서 특정 탭으로 이동할 때 호출
+  const navigateToTab = (tabName) => {
+    setActiveTab(tabName);
+    setSearchQuery('');
+  };
+
+  // 통합 검색 결과 카드 클릭 시 해당 데이터가 보이는 탭 및 필터로 이동
+  const navigateToItem = (category, item) => {
+    if (category === 'algo') {
+      setActiveTab('algo');
+      setSelectedTag('ALL');
+    } else if (category === 'cert') {
+      setActiveTab('cert');
+      if (item && item.certName) {
+        setSelectedCertTab(item.certName);
+      } else {
+        setSelectedCertTab('ALL');
+      }
+    } else if (category === 'cs') {
+      setActiveTab('cs');
+    } else if (category === 'lang') {
+      setActiveTab('language');
+    }
+    setSearchQuery('');
+  };
+
+  // 현재 탭에 맞는 검색창 안내 문구
+  const searchPlaceholder = useMemo(() => {
+    if (activeTab === 'dashboard' || activeTab === 'settings') {
+      return '전체 아카이브 통합 검색 (알고리즘, 자격증, CS, 어학)...';
+    }
+    if (activeTab === 'algo') return '알고리즘 문제명, 플랫폼, 태그, 요약 검색...';
+    if (activeTab === 'cert') return '자격증 명칭, 핵심 요약, 오답 포인트 검색...';
+    if (activeTab === 'cs') return 'CS 도메인, 이론 주제, 핵심 개념 검색...';
+    if (activeTab === 'language') return '영어 표현, 상황 뉘앙스, 한글 뜻 검색...';
+    return '검색어를 입력하세요...';
+  }, [activeTab]);
+
   // Dynamic Typography Styles
   const typo = useMemo(() => {
     if (fontSizeLevel === 'xlarge') {
@@ -823,10 +861,12 @@ export default function App() {
     loadDataFromGithub(tokenInput.trim());
   };
 
+  // 검색 필터링 목록들
   const filteredCertNotes = useMemo(() => {
     return certNotes.filter((note) => {
       const matchesTab = selectedCertTab === 'ALL' || note.certName === selectedCertTab;
       const matchesSearch =
+        !searchQuery.trim() ||
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.certName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (note.summary && note.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -838,6 +878,7 @@ export default function App() {
   const filteredAlgorithms = useMemo(() => {
     return algoList.filter((item) => {
       const matchesSearch =
+        !searchQuery.trim() ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.platform.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.summary && item.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -850,6 +891,7 @@ export default function App() {
   const filteredCsList = useMemo(() => {
     return csList.filter(
       (item) =>
+        !searchQuery.trim() ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.concept.toLowerCase().includes(searchQuery.toLowerCase())
@@ -859,6 +901,7 @@ export default function App() {
   const filteredLangList = useMemo(() => {
     return langList.filter(
       (item) =>
+        !searchQuery.trim() ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.situation?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -874,6 +917,9 @@ export default function App() {
   }, [eventsList, selectedDateStr]);
 
   const selectedDateHoliday = HOLIDAYS[selectedDateStr] || null;
+
+  // 대시보드 또는 환경설정 탭일 때 전역 통합 검색 결과 활성화 여부
+  const isGlobalSearchActive = (activeTab === 'dashboard' || activeTab === 'settings') && Boolean(searchQuery.trim());
 
   return (
     <div className={`min-h-screen font-sans flex flex-col md:flex-row transition-colors duration-200 ${c.appBg} ${typo.body}`}>
@@ -936,7 +982,7 @@ export default function App() {
 
           <nav className="space-y-1.5">
             <button
-              onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); }}
+              onClick={() => navigateToTab('dashboard')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'dashboard' ? c.navActive : c.navHover
               }`}
@@ -946,7 +992,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('algo'); setSearchQuery(''); }}
+              onClick={() => navigateToTab('algo')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'algo' ? c.navActive : c.navHover
               }`}
@@ -961,7 +1007,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('cert'); setSearchQuery(''); }}
+              onClick={() => navigateToTab('cert')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'cert' ? c.navActive : c.navHover
               }`}
@@ -976,7 +1022,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('cs'); setSearchQuery(''); }}
+              onClick={() => navigateToTab('cs')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'cs' ? c.navActive : c.navHover
               }`}
@@ -991,7 +1037,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('language'); setSearchQuery(''); }}
+              onClick={() => navigateToTab('language')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'language' ? c.navActive : c.navHover
               }`}
@@ -1006,7 +1052,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('settings'); setSearchQuery(''); }}
+              onClick={() => navigateToTab('settings')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'settings' ? c.navActive : c.navHover
               }`}
@@ -1094,7 +1140,7 @@ export default function App() {
             <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${c.dimText}`} />
             <input
               type="text"
-              placeholder="전체 아카이브 통합 검색 (알고리즘, 자격증, CS, 영어)..."
+              placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full rounded-xl pl-10 pr-4 py-2 placeholder-slate-400 focus:outline-none transition-colors text-sm ${c.inputBg}`}
@@ -1128,8 +1174,8 @@ export default function App() {
         </header>
 
         <div className="p-6 md:p-8 space-y-8 flex-1">
-          {/* 어떤 탭에 있든 검색어(searchQuery)가 입력되어 있으면 최우선으로 글로벌 통합 검색 뷰를 렌더링 */}
-          {searchQuery.trim() ? (
+          {/* 대시보드 또는 환경설정 탭일 때 검색어를 입력하면 전역 통합 검색 결과 뷰를 렌더링 */}
+          {isGlobalSearchActive ? (
             <div className="space-y-6 animate-fadeIn">
               <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                 <h3 className="text-lg font-bold flex items-center gap-2">
@@ -1153,8 +1199,8 @@ export default function App() {
                   </h4>
                   {filteredAlgorithms.length > 0 && (
                     <button
-                      onClick={() => setActiveTab('algo')}
-                      className={`text-xs hover:text-emerald-500 flex items-center gap-1 ${c.subText}`}
+                      onClick={() => navigateToTab('algo')}
+                      className={`text-xs hover:text-emerald-500 flex items-center gap-1 font-medium transition ${c.subText}`}
                     >
                       알고리즘 탭으로 이동 <ArrowRight className="w-3 h-3" />
                     </button>
@@ -1170,19 +1216,22 @@ export default function App() {
                     {filteredAlgorithms.slice(0, 4).map((algo) => (
                       <div
                         key={algo.id}
-                        onClick={() => setActiveTab('algo')}
-                        className={`p-4 border hover:border-emerald-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                        onClick={() => navigateToItem('algo', algo)}
+                        className={`p-4 border hover:border-emerald-500/60 rounded-xl cursor-pointer transition space-y-2 hover:-translate-y-0.5 hover:shadow-md ${c.cardBg}`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-bold">
                             {algo.platform} #{algo.problemNumber}
                           </span>
                           <span className={`text-[11px] ${c.dimText}`}>{algo.difficulty}</span>
                         </div>
-                        <h5 className="text-sm font-bold truncate">{algo.title}</h5>
+                        <h5 className="text-sm font-bold truncate hover:text-emerald-500 transition-colors">{algo.title}</h5>
                         <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
                           {algo.summary}
                         </p>
+                        <span className="text-[10px] text-emerald-500 font-semibold block pt-1">
+                          클릭하여 알고리즘 탭에서 보기 →
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1198,8 +1247,8 @@ export default function App() {
                   </h4>
                   {filteredCertNotes.length > 0 && (
                     <button
-                      onClick={() => setActiveTab('cert')}
-                      className={`text-xs hover:text-amber-500 flex items-center gap-1 ${c.subText}`}
+                      onClick={() => navigateToTab('cert')}
+                      className={`text-xs hover:text-amber-500 flex items-center gap-1 font-medium transition ${c.subText}`}
                     >
                       자격증 탭으로 이동 <ArrowRight className="w-3 h-3" />
                     </button>
@@ -1215,16 +1264,19 @@ export default function App() {
                     {filteredCertNotes.slice(0, 4).map((note) => (
                       <div
                         key={note.id}
-                        onClick={() => setActiveTab('cert')}
-                        className={`p-4 border hover:border-amber-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                        onClick={() => navigateToItem('cert', note)}
+                        className={`p-4 border hover:border-amber-500/60 rounded-xl cursor-pointer transition space-y-2 hover:-translate-y-0.5 hover:shadow-md ${c.cardBg}`}
                       >
                         <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           {note.certName}
                         </span>
-                        <h5 className="text-sm font-bold truncate">{note.title}</h5>
+                        <h5 className="text-sm font-bold truncate hover:text-amber-500 transition-colors">{note.title}</h5>
                         <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
                           {note.summary}
                         </p>
+                        <span className="text-[10px] text-amber-500 font-semibold block pt-1">
+                          클릭하여 자격증 탭에서 보기 →
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1240,8 +1292,8 @@ export default function App() {
                   </h4>
                   {filteredCsList.length > 0 && (
                     <button
-                      onClick={() => setActiveTab('cs')}
-                      className={`text-xs hover:text-blue-500 flex items-center gap-1 ${c.subText}`}
+                      onClick={() => navigateToTab('cs')}
+                      className={`text-xs hover:text-blue-500 flex items-center gap-1 font-medium transition ${c.subText}`}
                     >
                       CS 탭으로 이동 <ArrowRight className="w-3 h-3" />
                     </button>
@@ -1257,16 +1309,19 @@ export default function App() {
                     {filteredCsList.slice(0, 4).map((item) => (
                       <div
                         key={item.id}
-                        onClick={() => setActiveTab('cs')}
-                        className={`p-4 border hover:border-blue-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                        onClick={() => navigateToItem('cs', item)}
+                        className={`p-4 border hover:border-blue-500/60 rounded-xl cursor-pointer transition space-y-2 hover:-translate-y-0.5 hover:shadow-md ${c.cardBg}`}
                       >
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 font-bold">
                           {item.domain}
                         </span>
-                        <h5 className="text-sm font-bold truncate">{item.title}</h5>
+                        <h5 className="text-sm font-bold truncate hover:text-blue-500 transition-colors">{item.title}</h5>
                         <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
                           {item.concept}
                         </p>
+                        <span className="text-[10px] text-blue-500 font-semibold block pt-1">
+                          클릭하여 CS 탭에서 보기 →
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1282,8 +1337,8 @@ export default function App() {
                   </h4>
                   {filteredLangList.length > 0 && (
                     <button
-                      onClick={() => setActiveTab('language')}
-                      className={`text-xs hover:text-rose-500 flex items-center gap-1 ${c.subText}`}
+                      onClick={() => navigateToTab('language')}
+                      className={`text-xs hover:text-rose-500 flex items-center gap-1 font-medium transition ${c.subText}`}
                     >
                       어학 탭으로 이동 <ArrowRight className="w-3 h-3" />
                     </button>
@@ -1299,16 +1354,19 @@ export default function App() {
                     {filteredLangList.slice(0, 4).map((item) => (
                       <div
                         key={item.id}
-                        onClick={() => setActiveTab('language')}
-                        className={`p-4 border hover:border-rose-500/50 rounded-xl cursor-pointer transition space-y-2 ${c.cardBg}`}
+                        onClick={() => navigateToItem('lang', item)}
+                        className={`p-4 border hover:border-rose-500/60 rounded-xl cursor-pointer transition space-y-2 hover:-translate-y-0.5 hover:shadow-md ${c.cardBg}`}
                       >
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold">
                           {item.category}
                         </span>
-                        <h5 className="text-sm font-bold truncate">{item.title}</h5>
+                        <h5 className="text-sm font-bold truncate hover:text-rose-500 transition-colors">{item.title}</h5>
                         <p className={`line-clamp-2 ${typo.summary} whitespace-pre-wrap ${c.subText}`}>
                           {item.situation}
                         </p>
+                        <span className="text-[10px] text-rose-500 font-semibold block pt-1">
+                          클릭하여 어학 탭에서 보기 →
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1607,10 +1665,17 @@ export default function App() {
               {activeTab === 'algo' && (
                 <div className="space-y-6 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                      <Code2 className="w-6 h-6 text-emerald-500" />
-                      알고리즘 아카이브
-                    </h2>
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                        <Code2 className="w-6 h-6 text-emerald-500" />
+                        알고리즘 아카이브
+                      </h2>
+                      {searchQuery.trim() && (
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 font-mono">
+                          "{searchQuery}" 필터링 중
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setActiveTab('settings')}
@@ -1670,7 +1735,9 @@ export default function App() {
                   <div className="space-y-6">
                     {filteredAlgorithms.length === 0 ? (
                       <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
-                        <p className={`text-sm ${c.dimText}`}>해당 조건의 알고리즘 풀이가 없습니다.</p>
+                        <p className={`text-sm ${c.dimText}`}>
+                          {searchQuery.trim() ? `"${searchQuery}" 검색 조건에 일치하는 알고리즘 풀이가 없습니다.` : '해당 조건의 알고리즘 풀이가 없습니다.'}
+                        </p>
                       </div>
                     ) : (
                       filteredAlgorithms.map((algo) => (
@@ -1766,10 +1833,17 @@ export default function App() {
                 <div className="space-y-6 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                        <Award className="w-6 h-6 text-amber-500" />
-                        자격증 아카이브
-                      </h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                          <Award className="w-6 h-6 text-amber-500" />
+                          자격증 아카이브
+                        </h2>
+                        {searchQuery.trim() && (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 font-mono">
+                            "{searchQuery}" 필터링 중
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-xs mt-1 ${c.dimText}`}>자격증 종목별로 학습 요약 노트 및 기출 포인트를 모아봅니다.</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1830,7 +1904,9 @@ export default function App() {
                     {filteredCertNotes.length === 0 ? (
                       <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
                         <BookOpen className={`w-8 h-8 mx-auto mb-2 ${c.dimText}`} />
-                        <p className={`text-sm ${c.dimText}`}>해당 자격증에 등록된 공부 노트가 없습니다.</p>
+                        <p className={`text-sm ${c.dimText}`}>
+                          {searchQuery.trim() ? `"${searchQuery}" 검색 조건에 일치하는 자격증 노트가 없습니다.` : '해당 자격증에 등록된 공부 노트가 없습니다.'}
+                        </p>
                       </div>
                     ) : (
                       filteredCertNotes.map((note) => (
@@ -1882,10 +1958,17 @@ export default function App() {
                 <div className="space-y-6 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                        <Cpu className="w-6 h-6 text-blue-500" />
-                        컴퓨터 사이언스 & 기술 면접
-                      </h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                          <Cpu className="w-6 h-6 text-blue-500" />
+                          컴퓨터 구조 & CS
+                        </h2>
+                        {searchQuery.trim() && (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 font-mono">
+                            "{searchQuery}" 필터링 중
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-xs mt-1 ${c.dimText}`}>운영체제, 네트워크, 데이터베이스 등 핵심 CS 이론과 면접 Q&A를 아카이빙합니다.</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1924,38 +2007,46 @@ export default function App() {
                   </div>
 
                   <div className="space-y-6">
-                    {csList.map((cs) => (
-                      <div key={cs.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                        <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                          <div>
-                            <span className={`rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 font-medium ${typo.badge}`}>
-                              {cs.domain}
-                            </span>
-                            <h3 className={`mt-1.5 ${typo.cardTitle}`}>{cs.title}</h3>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => handleOpenEdit('cs', cs)}
-                              title="수정하기"
-                              className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteItem('cs', cs.id)}
-                              title="삭제하기"
-                              className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
-                          {cs.concept}
-                        </div>
+                    {filteredCsList.length === 0 ? (
+                      <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
+                        <p className={`text-sm ${c.dimText}`}>
+                          {searchQuery.trim() ? `"${searchQuery}" 검색 조건에 일치하는 CS 이론이 없습니다.` : '등록된 CS 이론이 없습니다.'}
+                        </p>
                       </div>
-                    ))}
+                    ) : (
+                      filteredCsList.map((cs) => (
+                        <div key={cs.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                          <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                            <div>
+                              <span className={`rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 font-medium ${typo.badge}`}>
+                                {cs.domain}
+                              </span>
+                              <h3 className={`mt-1.5 ${typo.cardTitle}`}>{cs.title}</h3>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenEdit('cs', cs)}
+                                title="수정하기"
+                                className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem('cs', cs.id)}
+                                title="삭제하기"
+                                className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className={`p-4 rounded-xl border whitespace-pre-wrap ${c.cardInnerBg} ${c.cardInnerBorder} ${typo.summary}`}>
+                            {cs.concept}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -1965,10 +2056,17 @@ export default function App() {
                 <div className="space-y-6 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-2xl font-bold flex items-center gap-2.5">
-                        <Languages className="w-6 h-6 text-rose-500" />
-                        어학 및 테크 영어
-                      </h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                          <Languages className="w-6 h-6 text-rose-500" />
+                          어학 및 테크 영어
+                        </h2>
+                        {searchQuery.trim() && (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-500 font-mono">
+                            "{searchQuery}" 필터링 중
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-xs mt-1 ${c.dimText}`}>실무 개발 영어 회화, 테크 인터뷰 및 기술 표현을 정리하고 음성으로 청취합니다.</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -2007,53 +2105,61 @@ export default function App() {
                   </div>
 
                   <div className="space-y-6">
-                    {langList.map((item) => (
-                      <div key={item.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
-                        <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                          <div>
-                            <span className={`rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 ${typo.badge}`}>
-                              {item.category}
-                            </span>
-                            <h3 className={`mt-1.5 ${typo.cardTitle}`}>{item.title}</h3>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => handleOpenEdit('lang', item)}
-                              title="수정하기"
-                              className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteItem('lang', item.id)}
-                              title="삭제하기"
-                              className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2.5">
-                          {item.dialogue?.map((line, dIdx) => (
-                            <div key={dIdx} className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${c.cardInnerBg} ${c.cardInnerBorder}`}>
-                              <div>
-                                <p className={`font-medium ${typo.body}`}>{line.en}</p>
-                                <p className={`mt-1 ${c.dimText} ${typo.body}`}>{line.ko}</p>
-                              </div>
-                              <button onClick={() => speakText(line.en)} className={`p-2 hover:text-rose-500 rounded-lg transition shrink-0 border ${c.buttonSec}`}>
-                                <Volume2 className="w-4 h-4" />
+                    {filteredLangList.length === 0 ? (
+                      <div className={`text-center py-16 rounded-2xl border ${c.cardInnerBg} ${c.cardInnerBorder}`}>
+                        <p className={`text-sm ${c.dimText}`}>
+                          {searchQuery.trim() ? `"${searchQuery}" 검색 조건에 일치하는 영어 표현이 없습니다.` : '등록된 영어 표현이 없습니다.'}
+                        </p>
+                      </div>
+                    ) : (
+                      filteredLangList.map((item) => (
+                        <div key={item.id} className={`border rounded-2xl p-6 space-y-4 shadow-sm ${c.cardBg}`}>
+                          <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                            <div>
+                              <span className={`rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 ${typo.badge}`}>
+                                {item.category}
+                              </span>
+                              <h3 className={`mt-1.5 ${typo.cardTitle}`}>{item.title}</h3>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenEdit('lang', item)}
+                                title="수정하기"
+                                className={`p-2 rounded-lg hover:text-indigo-500 transition border ${c.buttonSec}`}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem('lang', item.id)}
+                                title="삭제하기"
+                                className={`p-2 rounded-lg hover:text-rose-500 transition border ${c.buttonSec}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          ))}
+                          </div>
+
+                          <div className="space-y-2.5">
+                            {item.dialogue?.map((line, dIdx) => (
+                              <div key={dIdx} className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${c.cardInnerBg} ${c.cardInnerBorder}`}>
+                                <div>
+                                  <p className={`font-medium ${typo.body}`}>{line.en}</p>
+                                  <p className={`mt-1 ${c.dimText} ${typo.body}`}>{line.ko}</p>
+                                </div>
+                                <button onClick={() => speakText(line.en)} className={`p-2 hover:text-rose-500 rounded-lg transition shrink-0 border ${c.buttonSec}`}>
+                                  <Volume2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* TAB 6: SETTINGS */}
+              {/* TAB 6: SETTINGS (검색어 없을 때 기본 환경 설정 화면) */}
               {activeTab === 'settings' && (
                 <div className="space-y-6 animate-fadeIn max-w-3xl">
                   <div>
@@ -2062,7 +2168,7 @@ export default function App() {
                       환경 설정
                     </h2>
                     <p className={`text-xs mt-1 ${c.dimText}`}>
-                      다크/라이트 테마, 글자 크기, 알고리즘 플랫폼 세팅을 사용자 환경에 맞게 커스텀합니다.
+                      다크/라이트 테마, 글자 크기, 알고리즘 플랫폼 세팅을 사용자 환경에 맞게 커스텀합니다. 상단 검색창으로 전체 아카이브를 검색할 수 있습니다.
                     </p>
                   </div>
 
