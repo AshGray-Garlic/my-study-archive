@@ -1,4 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-c';
+import 'prismjs/components/prism-cpp';
+import 'prismjs/components/prism-sql';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/themes/prism-tomorrow.css';
+
 import {
   Code2,
   Award,
@@ -105,6 +114,25 @@ const HOLIDAYS = {
   '2027-10-11': '대체공휴일',
   '2027-12-25': '성탄절'
 };
+
+// Prism 문법 색상 렌더링 전용 컴포넌트
+function CodeBlock({ code, language = 'java', className = '' }) {
+  const highlightedCode = useMemo(() => {
+    const langKey = (language || 'java').toLowerCase();
+    const grammar = Prism.languages[langKey] || Prism.languages.java || Prism.languages.javascript;
+    try {
+      return Prism.highlight(code || '', grammar, langKey);
+    } catch {
+      return code || '';
+    }
+  }, [code, language]);
+
+  return (
+    <pre className={className}>
+      <code dangerouslySetInnerHTML={{ __html: highlightedCode }} />
+    </pre>
+  );
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -968,7 +996,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen relative">
-        {/* EXPANDED CODE VIEWER OVERLAY (다크 / 라이트 테마 완벽 연동) */}
+        {/* EXPANDED CODE VIEWER OVERLAY */}
         {expandedCodeData && (
           <div className={`absolute inset-0 z-40 flex flex-col animate-fadeIn ${c.codeExpandedBg}`}>
             <div className={`px-6 py-4 border-b flex items-center justify-between shrink-0 shadow-md ${c.codeExpandedHeader}`}>
@@ -1011,9 +1039,11 @@ export default function App() {
             </div>
 
             <div className={`flex-1 overflow-auto p-6 md:p-8 font-mono leading-relaxed scrollbar-thin ${typo.codeExpanded} ${isDark ? 'selection:bg-indigo-500/30' : 'selection:bg-indigo-200'}`}>
-              <pre>
-                <code>{expandedCodeData.code}</code>
-              </pre>
+              <CodeBlock
+                code={expandedCodeData.code}
+                language={expandedCodeData.codeLanguage || 'java'}
+                className="overflow-x-auto"
+              />
             </div>
           </div>
         )}
@@ -1592,7 +1622,7 @@ export default function App() {
                           {algo.summary}
                         </div>
 
-                        {/* Code Container (라이트 / 다크 테마 완전 연동) */}
+                        {/* Code Container (문법 하이라이팅 적용) */}
                         {algo.code && (
                           <div className={`relative rounded-xl overflow-hidden border group ${c.codeContainer}`}>
                             <div className={`flex items-center justify-between px-4 py-2 border-b text-xs ${c.codeHeader}`}>
@@ -1623,9 +1653,11 @@ export default function App() {
                               className="cursor-pointer relative"
                               title="클릭하면 좌측 바 제외 전체화면으로 코드가 확대됩니다."
                             >
-                              <pre className={`p-4 font-mono overflow-x-auto max-h-64 scrollbar-thin ${typo.codePre}`}>
-                                <code>{algo.code}</code>
-                              </pre>
+                              <CodeBlock
+                                code={algo.code}
+                                language={algo.codeLanguage || 'java'}
+                                className={`p-4 font-mono overflow-x-auto max-h-64 scrollbar-thin ${typo.codePre}`}
+                              />
                               <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors flex items-center justify-center pointer-events-none">
                                 <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-xs px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 border ${c.buttonSec}`}>
                                   <Maximize2 className="w-3.5 h-3.5 text-emerald-500" />
