@@ -326,7 +326,7 @@ export default function App() {
     } else if (newNoteCategory === 'cert') {
       const newCertNote = {
         id: `cert-note-${Date.now()}`,
-        certName: newNoteData.subCategory || '정보처리기사',
+        certName: newNoteData.subCategory || '기술면접',
         title: newNoteData.title,
         tags: tagArray.length > 0 ? tagArray : ['핵심암기'],
         summary: newNoteData.summary || '공부한 핵심 이론 및 요약 내용',
@@ -1321,7 +1321,23 @@ export default function App() {
                   />
                 </div>
               )}
-
+              {/* CS 도메인(분야) 선택 및 직접 입력 */}
+              {newNoteCategory === 'cs' && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-300 font-semibold">CS 분류 / 도메인</label>
+                    <span className="text-[10px] text-slate-500">직접 입력 가능</span>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="예: 운영체제(OS), 네트워크, 데이터베이스, 자료구조, 웹/스프링"
+                    value={newNoteData.subCategory}
+                    onChange={(e) => setNewNoteData({ ...newNoteData, subCategory: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">제목</label>
                 <input
