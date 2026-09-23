@@ -25,7 +25,8 @@
       "problemNumber": "NEW",
       "difficulty": "D3",
       "tags": [
-        "구현"
+        "구현",
+        "D3"
       ],
       "timeComplexity": "O(N)",
       "spaceComplexity": "O(N)",
