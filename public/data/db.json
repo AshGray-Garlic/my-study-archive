@@ -1,6 +1,25 @@
 {
   "algorithms": [
     {
+      "id": "algo-1790268354600",
+      "title": "7532. 세영이의 SEM력 연도",
+      "platform": "SWEA",
+      "problemNumber": "NEW",
+      "difficulty": "D3",
+      "tags": [
+        "D3",
+        "구현"
+      ],
+      "timeComplexity": "O(N)",
+      "spaceComplexity": "O(N)",
+      "status": "Solved",
+      "summary": "365로 나누었을 때 S만큼 남는 연도만 돌면서 계산을 진행 하였습니다.\n24*29번 데이터들이 반복 될 것이기 때문에 for문에서 24*29번만 검사를 진행 했습니다.\nS만큼 남는 연도들 중 E와 M을 만족하는 값을 찾았을 경우 for문을 탈출합니다.\n\n※주의사항 : E와 M의 경우 24와 29로 나눴을때 나머지로 계산을 진행 하는데 문제에서는 0~23이 아닌 1~24의 값을 사용하므로 입력 받을 때 %를 이용하여 값을 입력받으면 정확한 계산이 가능해집니다.",
+      "keyPoint": "핵심 알고리즘 접근법",
+      "codeLanguage": "java",
+      "code": "import java.io.*;\nimport java.util.*;\n\npublic class Solution {\n\tpublic static void main(String[] args) throws IOException {\n\t\tBufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n\t\tStringBuilder sb = new StringBuilder();\n\t\tint T = Integer.parseInt(br.readLine().trim());\n\t\tfor (int test_case = 1; test_case <= T; test_case++) {\n\t\t\tStringTokenizer st = new StringTokenizer(br.readLine());\n\t\t\tint result = Integer.parseInt(st.nextToken());\n\t\t\tint e = Integer.parseInt(st.nextToken()) % 24;\n\t\t\tint m = Integer.parseInt(st.nextToken()) % 29;\n\t\t\tfor (int i = 0; i < 24 * 29; i++) {\n\t\t\t\tif (result % 24 == e && result % 29 == m)\n\t\t\t\t\tbreak;\n\t\t\t\tresult += 365;\n\t\t\t}\n\t\t\tSystem.out.println(\"#\" + test_case + \" \" + result);\n\t\t}\n\t}\n}",
+      "retrospective": "학습 기록"
+    },
+    {
       "id": "algo-1790064950185",
       "title": "현주가 좋아하는 제곱근 놀이",
       "platform": "SWEA",
