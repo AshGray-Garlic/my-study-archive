@@ -1,6 +1,25 @@
 {
   "algorithms": [
     {
+      "id": "algo-1790416401146",
+      "title": "16546. Baby-gin_실습",
+      "platform": "SWEA",
+      "problemNumber": "NEW",
+      "difficulty": "D2",
+      "tags": [
+        "D2",
+        "구현"
+      ],
+      "timeComplexity": "O(N)",
+      "spaceComplexity": "O(N)",
+      "status": "Solved",
+      "summary": "숫자가 총 6개가 나오므로 3개 이상 나오는 경우는 트리플렛밖에 존재 하지 않는다\n따라서 count가 3을 넘어가면 총 숫자 count에서 3을 빼주고 해당 숫자 count에서도 3을 빼준다\ncount가 0일 경우 트리플렛만 존재하기 때문에 true\ncount가 0이 아닐 경우에는 run 검사를 진행하고 run 검사 결과에 따라 출력한다. ",
+      "keyPoint": "핵심 알고리즘 접근법",
+      "codeLanguage": "java",
+      "code": "import java.util.*;\nimport java.io.*;\n\nclass Solution {\n\tstatic int N;\n\n\tpublic static void main(String args[]) throws Exception {\n\t\tBufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n\t\tint T = Integer.parseInt(br.readLine().trim());\n\t\tfor (int test_case = 1; test_case <= T; test_case++) {\n\t\t\tint[] count = new int[10];\n\t\t\tint mod = 0;\n\t\t\tString str = br.readLine();\n\t\t\tint idx = 0;\n\t\t\tfor (int i = 0; i < 6; i++) {\n\t\t\t\tidx = str.charAt(i) - '0';\n\t\t\t\tcount[idx]++;\n\t\t\t\tmod++;\n\t\t\t\tif (count[idx] == 3) {\n\t\t\t\t\tcount[idx] = 0;\n\t\t\t\t\tmod -= 3;\n\t\t\t\t}\n\t\t\t}\n\t\t\tboolean result = true;\n\t\t\tif (mod != 0) {\n\t\t\t\tresult = false;\n\t\t\t\tfor (int i = 1; i < 9; i++) {\n\t\t\t\t\tif (count[i - 1] == count[i] && count[i] == count[i + 1] && count[i] != 0) {\n\t\t\t\t\t\tresult = true;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t\tSystem.out.println(\"#\" + test_case + \" \" + result);\n\t\t}\n\t}\n}",
+      "retrospective": "학습 기록"
+    },
+    {
       "id": "algo-1790268354600",
       "title": "7532. 세영이의 SEM력 연도",
       "platform": "SWEA",
