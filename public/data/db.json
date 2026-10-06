@@ -1,6 +1,24 @@
 {
   "algorithms": [
     {
+      "id": "algo-1791251054296",
+      "title": "KRUSKAL 알고리즘",
+      "platform": "SSAFY 수업",
+      "problemNumber": "NEW",
+      "difficulty": "",
+      "tags": [
+        "KRUSKAL"
+      ],
+      "timeComplexity": "O(N)",
+      "spaceComplexity": "O(N)",
+      "status": "Solved",
+      "summary": "수업시간 코드 정리입니다.",
+      "keyPoint": "핵심 알고리즘 접근법",
+      "codeLanguage": "java",
+      "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n\tstatic class Edge implements Comparable<Edge> {\n\t\tint from;\n\t\tint to;\n\t\tint weight;\n\t\tEdge(int from, int to, int weight) {\n\t\t\tsuper();\n\t\t\tthis.from = from;\n\t\t\tthis.to = to;\n\t\t\tthis.weight = weight;\n\t\t}\n\t\t@Override\n\t\tpublic int compareTo(Edge o) {\n\t\t\treturn this.weight - o.weight;\t//가중치 기준 오름차순\n\t\t}\n\t}\n\tstatic void makeSets() {\n\t\tfor(int i = 0; i < V; i++) {\n\t\t\tparents[i] = i;\n\t\t}\n\t}\n\tstatic int find(int a) {\t\t\t// a가 속한 집합의 대표자 리턴\n\t\tif(a == parents[a])\n\t\t\treturn a;\n\t\treturn parents[a] = find(parents[a]);\t// pass compression\n\t}\n\tstatic boolean union(int a, int b) {\t// a, b가 속한 집합 합치기 (union에 성공하면 True, 실패하면 False 반환)\n\t\tint aRoot = find(a);\n\t\tint bRoot = find(b);\n\t\tif(aRoot == bRoot)\n\t\t\treturn false;\n\t\tparents[bRoot] = aRoot;\n\t\treturn true;\n\t}\n\tstatic Edge[] edgeList;\n\tstatic int[] parents;\n\tstatic int V, E;\n\tpublic static void main(String[] args) throws IOException {\n\t\tBufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n\t\tStringTokenizer st = new StringTokenizer(br.readLine());\n\t\tV = Integer.parseInt(st.nextToken());\n\t\tE = Integer.parseInt(st.nextToken());\n\t\tparents = new int[V];\n\t\tedgeList = new Edge[E];\n\t\tfor(int i = 0; i < E; i++) {\n\t\t\tst = new StringTokenizer(br.readLine());\n\t\t\tedgeList[i] = new Edge(Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()));\n\t\t}\t// 간선리스트 생성\n\t\tArrays.sort(edgeList);\n\t\tmakeSets();\t\t// 모든 정점을 루트로 하는 트리로 만듬\n\t\tint result = 0;\t// MST 비용\n\t\tint cnt = 0;\t// 사용된 간선 수\n\t\tfor(Edge edge : edgeList) {\n\t\t\tif(union(edge.from, edge.to)) {\n\t\t\t\tcnt++;\n\t\t\t\tresult += edge.weight;\n\t\t\t\tif(cnt == V - 1)\n\t\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\t\tSystem.out.println(result);\n\t}\n}",
+      "retrospective": "학습 기록"
+    },
+    {
       "id": "algo-1790416401146",
       "title": "16546. Baby-gin_실습",
       "platform": "SWEA",
@@ -119,7 +137,8 @@
     "SWEA",
     "Programmers",
     "CodeTree",
-    "SDS"
+    "SDS",
+    "SSAFY 수업"
   ],
   "events": [
     {
